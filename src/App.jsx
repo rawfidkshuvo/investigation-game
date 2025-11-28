@@ -95,6 +95,9 @@ const MEANS_CARDS = [
   "Plastic Bag",
   "Belt",
   "Towel",
+  "Poisonous Mushroom",
+  "Locked Room",
+  "Sedative",
   "Arsenic",
   "Cyanide Pill",
   "Venomous Snake",
@@ -115,6 +118,11 @@ const MEANS_CARDS = [
   "Fire",
   "Kerosine",
   "Lighter",
+  "Gas Leak",
+  "Car",
+  "Truck",
+  "Motorcycle",
+
 ];
 
 const CLUE_CARDS = [
@@ -178,9 +186,9 @@ const TILES_DATA = {
       "Suffocation",
       "Severe Injury",
       "Loss of Blood",
-      "Chemical / Sickness",
+      "Poisoning",
       "Accident",
-      "Projectile / Blast",
+      "Blast",
     ],
   },
   MAIN: [
@@ -234,17 +242,17 @@ const TILES_DATA = {
     },
   ],
   SUBORDINATE: [
-    // {
-    //   title: "Weather",
-    //   options: [
-    //     "Sunny/Clear",
-    //     "Rainy/Stormy",
-    //     "Foggy/Misty",
-    //     "Snowing",
-    //     "Hot/Dry",
-    //     "Windy",
-    //   ],
-    // },
+    {
+      title: "Weather",
+      options: [
+        "Sunny/Clear",
+        "Rainy/Stormy",
+        "Foggy/Misty",
+        "Snowing",
+        "Hot/Dry",
+        "Windy",
+      ],
+    },
     //{
     //   title: "Time of Death",
     //   options: [
@@ -283,10 +291,10 @@ const TILES_DATA = {
       options: [
         "Sharp",
         "Blunt",
-        "Toxin/Chemical",
+        "Toxic",
         "Projectile",
         "Everyday Object",
-        "Machinery/Tool",
+        "Tool",
       ],
     },
     {
@@ -314,7 +322,7 @@ const TILES_DATA = {
     {
       title: "Evidence Material",
       options: [
-        "Fabric/Cloth",
+        "Fabric",
         "Metal",
         "Paper/Wood",
         "Plastic",
@@ -507,7 +515,7 @@ const TILES_DATA = {
       ],
     },
     {
-      title: "Concealability (Weapon)",
+      title: "Weapon Concealability",
       options: [
         "Pocket Size",
         "Bag/Backpack Size",
@@ -518,7 +526,7 @@ const TILES_DATA = {
       ],
     },
     {
-      title: "Relation to Victim (Evidence)",
+      title: "Evidence Origin",
       options: [
         "Owned by Victim",
         "Stolen from Victim",

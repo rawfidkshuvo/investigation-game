@@ -186,7 +186,7 @@ const TILES_DATA = {
       "Suffocation",
       "Severe Injury",
       "Loss of Blood",
-      "Poisoning",
+      "Poisoning/Illness",
       "Accident",
       "Blast",
     ],
@@ -291,10 +291,10 @@ const TILES_DATA = {
       options: [
         "Sharp",
         "Blunt",
-        "Toxic",
-        "Projectile",
+        "Toxic/Chemical",
+        "Projectile/Weapon",
         "Everyday Object",
-        "Tool",
+        "Machinery/Tool",
       ],
     },
     {
@@ -325,9 +325,9 @@ const TILES_DATA = {
         "Fabric",
         "Metal",
         "Paper/Wood",
-        "Plastic",
+        "Plastic/Synthetic",
         "Biological",
-        "Stone/Glass",
+        "Stone/Glass/Ceramic",
       ],
     },
     {
@@ -371,7 +371,7 @@ const TILES_DATA = {
         "Bright Flash",
         "Dead Silence",
         "Scream",
-        "Breaking Glass",
+        "Something broken",
       ],
     },
     {
@@ -392,8 +392,8 @@ const TILES_DATA = {
         "Cautious",
         "Violent",
         "Calm/Cold",
-        "Nervous",
-        "Calculating",
+        "Nervous/Panicked",
+        "Intelligent",
       ],
     },
     // {
@@ -415,7 +415,7 @@ const TILES_DATA = {
         "Cruel",
         "Clumsy",
         "Professional",
-        "Bizarre",
+        "Weird/Bizarre",
       ],
     },
     {
@@ -423,7 +423,7 @@ const TILES_DATA = {
       options: [
         "Sound",
         "Smell",
-        "Silhouette",
+        "Silhouette/Shadow",
         "Someone Running",
         "Object Thrown",
         "Nothing",
@@ -441,7 +441,7 @@ const TILES_DATA = {
         "Yellow/Orange",
         "Black/Grey",
         "White/Clear",
-        "Metallic",
+        "Metallic/silver/gold",
       ],
     },
     // {

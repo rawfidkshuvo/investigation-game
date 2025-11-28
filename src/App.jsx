@@ -40,6 +40,7 @@ import {
   ThumbsUp,
   Crosshair,
   Info,
+  BookOpen,
 } from "lucide-react";
 
 // --- Firebase Init ---
@@ -480,6 +481,9 @@ export default function InvestigationGame() {
   // New State for Witness Hunt Interaction
   const [witnessHuntModalOpen, setWitnessHuntModalOpen] = useState(true);
   const [showSuggestionToast, setShowSuggestionToast] = useState(true);
+
+  // Tutorial State
+  const [showTutorial, setShowTutorial] = useState(false);
 
   useEffect(() => {
     const initAuth = async () => {
@@ -1179,10 +1183,233 @@ export default function InvestigationGame() {
                     Create Case File
                   </button>
                 </div>
+
+                <button
+                  onClick={() => setShowTutorial(true)}
+                  className="w-full flex items-center justify-center gap-2 text-slate-400 hover:text-white py-2 transition-colors text-sm font-bold uppercase tracking-widest"
+                >
+                  <BookOpen size={16} /> How to Play
+                </button>
               </div>
             </div>
           </div>
         </div>
+
+        {/* Tutorial Modal */}
+        {showTutorial && (
+          <div className="fixed inset-0 z-50 bg-slate-950/95 flex justify-center overflow-y-auto p-4 animate-in slide-in-from-bottom-10 fade-in duration-300">
+            <div className="w-full max-w-4xl relative">
+              <button
+                onClick={() => setShowTutorial(false)}
+                className="fixed top-4 right-4 md:absolute md:-right-12 md:top-0 bg-slate-800 p-2 rounded-full text-white hover:bg-slate-700 shadow-lg z-50"
+              >
+                <X size={24} />
+              </button>
+
+              <div className="space-y-8 pb-20 mt-12 md:mt-0">
+                {/* Header */}
+                <div className="text-center space-y-2">
+                  <h2 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600">
+                    GAME GUIDE
+                  </h2>
+                  <p className="text-slate-400">
+                    Deduction, Deception, and Discovery
+                  </p>
+                </div>
+
+                {/* Section 1: The Goal */}
+                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                  <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                    <Target className="text-red-500" /> The Objective
+                  </h3>
+                  <p className="text-slate-300 leading-relaxed">
+                    A murder has been committed. The{" "}
+                    <span className="text-blue-400 font-bold">Detective</span>{" "}
+                    knows the solution but can only communicate through vague
+                    clues. The{" "}
+                    <span className="text-green-400 font-bold">
+                      Investigators
+                    </span>{" "}
+                    must interpret these clues to find the true{" "}
+                    <strong className="text-white">Murder Weapon</strong> and{" "}
+                    <strong className="text-white">Evidence</strong> before time
+                    runs out. Meanwhile, the{" "}
+                    <span className="text-red-400 font-bold">Murderer</span>{" "}
+                    hides among them, trying to mislead the investigation.
+                  </p>
+                </div>
+
+                {/* Section 2: The Roles */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-slate-800/50 border border-blue-500/30 rounded-xl p-5">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="bg-blue-600 p-1.5 rounded text-white">
+                        <Search size={16} />
+                      </div>
+                      <span className="font-bold text-blue-400">Detective</span>
+                    </div>
+                    <p className="text-sm text-slate-300">
+                      Host & Guide. Knows the solution. Cannot speak about the
+                      case. Selects tile cards to give hints.
+                    </p>
+                  </div>
+
+                  <div className="bg-slate-800/50 border border-red-500/30 rounded-xl p-5">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="bg-red-600 p-1.5 rounded text-white">
+                        <Skull size={16} />
+                      </div>
+                      <span className="font-bold text-red-400">Murderer</span>
+                    </div>
+                    <p className="text-sm text-slate-300">
+                      The Culprit. Chooses the Means & Clue at the start. Hides
+                      identity and tries to sabotage the team.
+                    </p>
+                  </div>
+
+                  <div className="bg-slate-800/50 border border-emerald-500/30 rounded-xl p-5">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="bg-emerald-600 p-1.5 rounded text-white">
+                        <Badge size={16} />
+                      </div>
+                      <span className="font-bold text-emerald-400">
+                        Investigator
+                      </span>
+                    </div>
+                    <p className="text-sm text-slate-300">
+                      The Team. Discusses clues and submits accusations to solve
+                      the crime.
+                    </p>
+                  </div>
+
+                  <div className="bg-slate-800/50 border border-orange-500/30 rounded-xl p-5">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="bg-orange-600 p-1.5 rounded text-white">
+                        <Briefcase size={16} />
+                      </div>
+                      <span className="font-bold text-orange-400">
+                        Accomplice
+                      </span>
+                    </div>
+                    <p className="text-sm text-slate-300">
+                      (Optional) Knows who the Murderer is. Helps them win
+                      without getting caught.
+                    </p>
+                  </div>
+
+                  <div className="bg-slate-800/50 border border-indigo-500/30 rounded-xl p-5 md:col-span-2">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="bg-indigo-600 p-1.5 rounded text-white">
+                        <Eye size={16} />
+                      </div>
+                      <span className="font-bold text-indigo-400">Witness</span>
+                    </div>
+                    <p className="text-sm text-slate-300">
+                      (Optional) Knows the Murderer but not the solution. Must
+                      help Investigators without revealing themselves. If the
+                      Murderer finds the Witness at the end, the Murderer wins!
+                    </p>
+                  </div>
+                </div>
+
+                {/* Section 3: Gameplay Loop */}
+                <div className="space-y-4">
+                  <h3 className="text-xl font-bold text-white pl-2 border-l-4 border-purple-500">
+                    How It Works
+                  </h3>
+
+                  <div className="flex gap-4">
+                    <div className="flex-none w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-slate-500">
+                      1
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-white">The Crime</h4>
+                      <p className="text-sm text-slate-400">
+                        Everyone closes their eyes. The Murderer wakes up and
+                        selects 1 Means card and 1 Clue card from their hand.
+                        This becomes the solution.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-4">
+                    <div className="flex-none w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-slate-500">
+                      2
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-white">
+                        The Investigation
+                      </h4>
+                      <p className="text-sm text-slate-400">
+                        The Detective analyzes the solution. They receive random
+                        "Scene Tiles" (e.g., Location, Weather, Victim's
+                        Clothes). The Detective selects the option on each tile
+                        that <em>best relates</em> to the solution.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-4">
+                    <div className="flex-none w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-slate-500">
+                      3
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-white">
+                        Discussion & Rounds
+                      </h4>
+                      <p className="text-sm text-slate-400">
+                        Investigators discuss the tiles. "Why did the Detective
+                        say it was 'Noisy'? Maybe the weapon is a Gun?" <br />
+                        The game lasts <strong>3 Rounds</strong>. In each new
+                        round, the Detective replaces one old tile with a new
+                        one to refine the clues.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-4">
+                    <div className="flex-none w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-slate-500">
+                      4
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-white">
+                        Accusation & Winning
+                      </h4>
+                      <ul className="text-sm text-slate-400 list-disc ml-4 mt-1 space-y-1">
+                        <li>
+                          Investigators can spend their{" "}
+                          <strong className="text-yellow-500">Badge</strong> to
+                          make an accusation at any time.
+                        </li>
+                        <li>
+                          If <strong>CORRECT</strong>: Investigators Win!
+                          (Unless Murderer finds Witness).
+                        </li>
+                        <li>
+                          If <strong>WRONG</strong>: The player loses their
+                          badge and can no longer solve.
+                        </li>
+                        <li>
+                          If all badges are used or rounds end without a
+                          solution: <strong>Murderer Wins!</strong>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="text-center pt-8">
+                  <button
+                    onClick={() => setShowTutorial(false)}
+                    className="bg-white text-slate-900 px-8 py-3 rounded-full font-bold hover:scale-105 transition-transform"
+                  >
+                    Got it, Let's Play!
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -2621,4 +2848,3 @@ export default function InvestigationGame() {
 
   return null;
 }
-//final fixed

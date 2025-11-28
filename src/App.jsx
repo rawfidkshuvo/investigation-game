@@ -38,6 +38,8 @@ import {
   ChevronUp,
   PlayCircle,
   ThumbsUp,
+  Crosshair,
+  Info,
 } from "lucide-react";
 
 // --- Firebase Init ---
@@ -473,6 +475,11 @@ export default function InvestigationGame() {
   const [replacementMode, setReplacementMode] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false); // Confirm Leave Modal
   const [showCluesMobile, setShowCluesMobile] = useState(true); // Toggle clues visibility on mobile
+  const [uiAlert, setUiAlert] = useState(null); // { title, message, type: 'alert'|'confirm', onConfirm }
+
+  // New State for Witness Hunt Interaction
+  const [witnessHuntModalOpen, setWitnessHuntModalOpen] = useState(true);
+  const [showSuggestionToast, setShowSuggestionToast] = useState(true);
 
   useEffect(() => {
     const initAuth = async () => {
@@ -486,6 +493,23 @@ export default function InvestigationGame() {
     const unsubscribe = onAuthStateChanged(auth, (u) => setUser(u));
     return () => unsubscribe();
   }, []);
+
+  // Reset Witness Hunt Modal when phase changes
+  useEffect(() => {
+    if (gameState?.phase === "WITNESS_HUNT") {
+      setWitnessHuntModalOpen(true);
+      setShowSuggestionToast(true);
+    } else {
+      setWitnessHuntModalOpen(false);
+    }
+  }, [gameState?.phase]);
+
+  // Show Suggestion Toast if suggestion arrives
+  useEffect(() => {
+    if (gameState?.accompliceSuggestion) {
+      setShowSuggestionToast(true);
+    }
+  }, [gameState?.accompliceSuggestion]);
 
   useEffect(() => {
     if (!roomId || !user) return;
@@ -559,6 +583,17 @@ export default function InvestigationGame() {
       }
     );
   };
+
+  // --- Alert Helpers ---
+  const handleAlert = (title, message) => {
+    setUiAlert({ title, message, type: "alert" });
+  };
+
+  const handleConfirm = (title, message, onConfirm) => {
+    setUiAlert({ title, message, type: "confirm", onConfirm });
+  };
+
+  const closeAlert = () => setUiAlert(null);
 
   // --- Actions ---
 
@@ -829,7 +864,8 @@ export default function InvestigationGame() {
 
   const finishScientistPhase = async () => {
     const allSelected = gameState.activeTiles.every((t) => t.selected !== null);
-    if (!allSelected) return alert("Select an option for every tile!");
+    if (!allSelected)
+      return handleAlert("Incomplete", "Select an option for every tile!");
 
     await updateDoc(
       doc(db, "artifacts", appId, "public", "data", "rooms", roomId),
@@ -856,7 +892,8 @@ export default function InvestigationGame() {
 
   const nextRound = async (tileToReplaceIndex) => {
     if (tileToReplaceIndex < 2)
-      return alert(
+      return handleAlert(
+        "Invalid Action",
         "You cannot replace the Cause of Death or Main Location tile."
       );
     if (gameState.round >= 3) return;
@@ -1824,38 +1861,21 @@ export default function InvestigationGame() {
                 (acc) => acc.solverId === p.id
               );
 
+              // Logic to show Witness Select Buttons
+              const showWitnessButtons =
+                isFindWitnessPhase &&
+                !witnessHuntModalOpen &&
+                (isAccomplice || isMurderer) &&
+                p.role !== "DETECTIVE" &&
+                p.role !== "MURDERER" &&
+                p.role !== "ACCOMPLICE";
+
               return (
                 <div
                   key={p.id}
                   onClick={() => {
-                    // Accomplice Suggestion Logic
-                    if (
-                      isFindWitnessPhase &&
-                      isAccomplice &&
-                      p.role !== "MURDERER" &&
-                      p.role !== "ACCOMPLICE"
-                    ) {
-                      handleAccompliceSuggest(p.id);
-                    }
-                    // Murderer Selection Logic (Requires Accomplice Suggestion First)
-                    if (
-                      isFindWitnessPhase &&
-                      isMurderer &&
-                      p.role !== "MURDERER" &&
-                      p.role !== "ACCOMPLICE"
-                    ) {
-                      const hasAccomplice = gameState.settings?.useAccomplice;
-                      const hasSuggestion = gameState.accompliceSuggestion;
-
-                      if (hasAccomplice && !hasSuggestion) {
-                        alert(
-                          "Wait for your Accomplice to suggest a target first!"
-                        );
-                        return;
-                      }
-
-                      attemptFindWitness(p.id);
-                    }
+                    // Deprecated click logic - using buttons now, but keeping this for safety or if user clicks card body
+                    // Leaving it empty for witness phase to prioritize buttons
                   }}
                   className={`relative bg-slate-900 border rounded-xl overflow-hidden shadow-lg transition-all 
                      ${
@@ -1866,14 +1886,6 @@ export default function InvestigationGame() {
                      ${
                        isFindWitnessPhase && isSuggested && isMurderer
                          ? "ring-4 ring-yellow-500 scale-105"
-                         : ""
-                     }
-                     ${
-                       isFindWitnessPhase &&
-                       (isMurderer || isAccomplice) &&
-                       p.role !== "MURDERER" &&
-                       p.role !== "ACCOMPLICE"
-                         ? "cursor-pointer hover:border-indigo-500"
                          : ""
                      }
                      ${
@@ -1922,8 +1934,9 @@ export default function InvestigationGame() {
                         const isSelected = isTarget && solveTarget.means === m;
                         const isSubmitted =
                           isAccusedByMe && myAccusation.means === m;
+                        // UPDATE: Murderer now also sees solution highlight
                         const isSolution =
-                          (isScientist || isAccomplice) &&
+                          (isScientist || isAccomplice || isMurderer) &&
                           gameState.solution?.means === m &&
                           gameState.solution?.murdererId === p.id;
 
@@ -1962,8 +1975,9 @@ export default function InvestigationGame() {
                         const isSelected = isTarget && solveTarget.clue === c;
                         const isSubmitted =
                           isAccusedByMe && myAccusation.clue === c;
+                        // UPDATE: Murderer now also sees solution highlight
                         const isSolution =
-                          (isScientist || isAccomplice) &&
+                          (isScientist || isAccomplice || isMurderer) &&
                           gameState.solution?.clue === c &&
                           gameState.solution?.murdererId === p.id;
 
@@ -2077,20 +2091,68 @@ export default function InvestigationGame() {
                     </div>
                   )}
 
-                  {/* "Review Accusation" Button Container - FIXED TO BOTTOM OF CARD */}
-                  {isTarget && (solveTarget.means || solveTarget.clue) && (
-                    <div className="p-2 pt-0 mt-auto sticky bottom-0 bg-slate-900/95 backdrop-blur-sm border-t border-slate-700 -mx-px -mb-px rounded-b-xl z-10">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setShowSolveModal(true);
-                        }}
-                        className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-2 px-4 rounded-lg text-xs flex items-center justify-center gap-2 shadow-lg animate-in slide-in-from-bottom-2 fade-in transition-transform active:scale-95"
-                      >
-                        <Badge size={14} /> Review Accusation
-                      </button>
+                  {/* WITNESS SELECT BUTTONS (New Feature) */}
+                  {showWitnessButtons && (
+                    <div className="p-2 pt-0 mt-auto sticky bottom-0 bg-slate-900/95 backdrop-blur-sm border-t border-slate-700 -mx-px -mb-px rounded-b-xl z-30">
+                      {isAccomplice && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAccompliceSuggest(p.id);
+                          }}
+                          className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-2 px-4 rounded-lg text-xs flex items-center justify-center gap-2 shadow-lg animate-in slide-in-from-bottom-2 fade-in"
+                        >
+                          <Target size={14} /> Suggest as Witness
+                        </button>
+                      )}
+                      {isMurderer && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // Murderer Logic Check: Accomplice present but no suggestion?
+                            const hasAccomplice =
+                              gameState.settings?.useAccomplice;
+                            const hasSuggestion =
+                              gameState.accompliceSuggestion;
+
+                            if (hasAccomplice && !hasSuggestion) {
+                              handleAlert(
+                                "Wait!",
+                                "Wait for your Accomplice to suggest a target first!"
+                              );
+                              return;
+                            }
+                            handleConfirm(
+                              "Eliminate Witness?",
+                              `Eliminate ${p.name} as the Witness? This ends the game.`,
+                              () => attemptFindWitness(p.id)
+                            );
+                          }}
+                          className="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded-lg text-xs flex items-center justify-center gap-2 shadow-lg animate-in slide-in-from-bottom-2 fade-in animate-pulse"
+                        >
+                          <Crosshair size={14} /> ELIMINATE
+                        </button>
+                      )}
                     </div>
                   )}
+
+                  {/* "Review Accusation" Button Container - FIXED TO BOTTOM OF CARD */}
+                  {/* Only show if NOT in Witness Hunt phase to avoid button clutter */}
+                  {isTarget &&
+                    (solveTarget.means || solveTarget.clue) &&
+                    !isFindWitnessPhase && (
+                      <div className="p-2 pt-0 mt-auto sticky bottom-0 bg-slate-900/95 backdrop-blur-sm border-t border-slate-700 -mx-px -mb-px rounded-b-xl z-10">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowSolveModal(true);
+                          }}
+                          className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-2 px-4 rounded-lg text-xs flex items-center justify-center gap-2 shadow-lg animate-in slide-in-from-bottom-2 fade-in transition-transform active:scale-95"
+                        >
+                          <Badge size={14} /> Review Accusation
+                        </button>
+                      </div>
+                    )}
                 </div>
               );
             })}
@@ -2159,6 +2221,84 @@ export default function InvestigationGame() {
             </div>
           </div>
         )}
+
+        {/* Alert/Confirm Modal (New Feature) */}
+        {uiAlert && (
+          <div className="fixed inset-0 bg-black/90 z-[70] flex items-center justify-center p-4">
+            <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 max-w-sm w-full text-center shadow-2xl animate-in zoom-in-95 duration-200">
+              <div className="flex justify-center mb-4">
+                {uiAlert.type === "confirm" ? (
+                  <AlertTriangle size={48} className="text-yellow-500" />
+                ) : (
+                  <Info size={48} className="text-blue-500" />
+                )}
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">
+                {uiAlert.title}
+              </h3>
+              <p className="text-slate-400 mb-6 text-sm">{uiAlert.message}</p>
+              <div
+                className={`grid ${
+                  uiAlert.type === "confirm" ? "grid-cols-2" : "grid-cols-1"
+                } gap-3`}
+              >
+                {uiAlert.type === "confirm" && (
+                  <button
+                    onClick={closeAlert}
+                    className="bg-slate-700 hover:bg-slate-600 text-white py-3 rounded font-bold"
+                  >
+                    Cancel
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    if (uiAlert.onConfirm) uiAlert.onConfirm();
+                    closeAlert();
+                  }}
+                  className={`${
+                    uiAlert.type === "confirm"
+                      ? "bg-red-600 hover:bg-red-500"
+                      : "bg-blue-600 hover:bg-blue-500"
+                  } text-white py-3 rounded font-bold`}
+                >
+                  {uiAlert.type === "confirm" ? "Confirm" : "OK"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Persistent Floating Accomplice Suggestion (New Feature) */}
+        {isFindWitnessPhase &&
+          !witnessHuntModalOpen &&
+          isMurderer &&
+          gameState.accompliceSuggestion &&
+          showSuggestionToast && (
+            <div
+              className="fixed inset-0 z-40 flex items-start justify-center pt-20"
+              onClick={() => setShowSuggestionToast(false)} // Clicking backdrop closes it
+            >
+              <div
+                onClick={(e) => e.stopPropagation()} // Clicking content prevents closing
+                className="bg-green-900/90 border-2 border-green-500 p-4 rounded-xl shadow-2xl animate-bounce cursor-default max-w-xs text-center backdrop-blur-sm"
+              >
+                <div className="font-bold text-green-400 text-sm mb-1 uppercase">
+                  <Target size={14} className="inline mr-1" /> Target Confirmed
+                </div>
+                Accomplice suggests:{" "}
+                <span className="text-white font-black text-lg block mt-1">
+                  {
+                    gameState.players.find(
+                      (p) => p.id === gameState.accompliceSuggestion
+                    )?.name
+                  }
+                </span>
+                <div className="text-[10px] text-green-300 mt-2 uppercase tracking-wide">
+                  Click empty space to dismiss
+                </div>
+              </div>
+            </div>
+          )}
 
         {/* MODAL: SOLVE ATTEMPT */}
         {showSolveModal && solveTarget && (
@@ -2327,16 +2467,16 @@ export default function InvestigationGame() {
         )}
 
         {/* WITNESS HUNT OVERLAY (Modified to allow interaction) */}
-        {isFindWitnessPhase && (
-          <div className="fixed inset-0 z-50 flex flex-col items-center justify-center pointer-events-none p-4">
+        {isFindWitnessPhase && witnessHuntModalOpen && (
+          <div className="fixed inset-0 z-50 flex flex-col items-center justify-center p-4 bg-black/80">
             {isMurderer || isAccomplice ? (
-              <div className="bg-red-950/95 border-2 border-red-500 p-6 rounded-xl shadow-2xl text-center max-w-lg animate-in fade-in zoom-in duration-300">
+              <div className="bg-red-950 border-2 border-red-500 p-6 rounded-xl shadow-2xl text-center max-w-lg animate-in fade-in zoom-in duration-300">
                 <h2 className="text-2xl md:text-3xl font-black text-red-500 mb-2">
                   YOU HAVE BEEN CAUGHT!
                 </h2>
                 <p className="text-red-100 text-base md:text-lg mb-4">
                   {isAccomplice
-                    ? "Help the Murderer find the Witness. Click a player to suggest."
+                    ? "Help the Murderer find the Witness."
                     : "Identify the Witness to steal the win."}
                 </p>
 
@@ -2367,9 +2507,12 @@ export default function InvestigationGame() {
                     </div>
                   ))}
 
-                <div className="text-xs md:text-sm font-bold text-red-400 uppercase tracking-widest animate-pulse">
-                  Select a player from the board below
-                </div>
+                <button
+                  onClick={() => setWitnessHuntModalOpen(false)}
+                  className="mt-4 bg-white text-red-900 px-8 py-3 rounded-full font-black uppercase text-sm hover:scale-105 transition-transform shadow-xl"
+                >
+                  Select Witness
+                </button>
               </div>
             ) : (
               <div className="bg-slate-900/95 border-2 border-yellow-500 p-6 rounded-xl shadow-2xl text-center max-w-lg animate-in fade-in zoom-in duration-300">
@@ -2478,3 +2621,4 @@ export default function InvestigationGame() {
 
   return null;
 }
+//final fixed

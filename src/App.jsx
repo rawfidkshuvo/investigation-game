@@ -45,17 +45,17 @@ import {
 
 // --- Firebase Init ---
 const firebaseConfig = {
-  apiKey: "AIzaSyDf86JHBvY9Y1B1x8QDbJkASmlANouEvX0",
-  authDomain: "card-games-28729.firebaseapp.com",
-  projectId: "card-games-28729",
-  storageBucket: "card-games-28729.firebasestorage.app",
-  messagingSenderId: "466779458834",
-  appId: "1:466779458834:web:68572dd0fd90119f6d37cb",
+  apiKey: "AIzaSyBjIjK53vVJW1y5RaqEFGSFp0ECVDBEe1o",
+  authDomain: "game-hub-ff8aa.firebaseapp.com",
+  projectId: "game-hub-ff8aa",
+  storageBucket: "game-hub-ff8aa.firebasestorage.app",
+  messagingSenderId: "586559578902",
+  appId: "1:586559578902:web:c87b26c0536b13eb6aa637"
 };
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const appId = typeof __app_id !== "undefined" ? __app_id : "investigation-v2";
+const appId = typeof __app_id !== "undefined" ? __app_id : "investigation-game";
 
 // --- Game Data Assets (From PDF) ---
 

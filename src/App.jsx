@@ -36,14 +36,13 @@ import {
   Trash2,
   ChevronDown,
   ChevronUp,
-  PlayCircle,
-  ThumbsUp,
   Crosshair,
   Info,
   BookOpen,
 } from "lucide-react";
 
 // --- Firebase Init ---
+// FIXED: Use system config if available to prevent auth/custom-token-mismatch
 const firebaseConfig = {
   apiKey: "AIzaSyBjIjK53vVJW1y5RaqEFGSFp0ECVDBEe1o",
   authDomain: "game-hub-ff8aa.firebaseapp.com",
@@ -57,117 +56,222 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const appId = typeof __app_id !== "undefined" ? __app_id : "investigation-game";
 
-// --- Game Data Assets (From PDF) ---
+// --- Game Data Assets ---
 
 const MEANS_CARDS = [
   "Kitchen Knife",
   "Dagger",
-  "Machete",
+  "Crossed Swords",
   "Fire Axe",
-  "Ice Pick",
-  "Surgical Scalpel",
+  "Pickaxe",
+  "Hook",
   "Scissors",
-  "Broken Bottle",
+  "Champagne Bottle",
   "Katana",
   "Blade",
-  "saw",
+  "Saw",
   "Hammer",
-  "Baseball Bat",
-  "Golf Club",
+  "Cricket Bat",
+  "Field Hockey Stick",
   "Wrench",
   "Crowbar",
   "Brick",
-  "Heavy Statue",
+  "Moai Statue",
   "Candlestick",
   "Frying Pan",
   "Stone",
-  "Brick",
   "Pistol",
   "Silenced Gun",
-  "Sniper Rifle",
+  "Boxing Glove",
   "Shotgun",
-  "Crossbow",
+  "Bow and Arrow",
   "Rope",
   "Wire",
   "Necktie",
-  "Pillow",
+  "Teddy Bear",
   "Plastic Bag",
-  "Belt",
-  "Towel",
+  "Chain",
+  "Scarf",
   "Arsenic",
   "Cyanide Pill",
   "Venomous Snake",
-  "Overdose Injection",
+  "Syringe",
   "Sleeping Pills",
   "Chainsaw",
   "Explosives",
-  "Molotov Cocktail",
+  "Dynamite",
   "Electrocution",
   "Drowning",
   "Push from Heights",
   "Vehicle",
   "Trophy",
   "Screwdriver",
-  "Garden Shears",
-  "Bare Hands",
-  "Laptop Cord",
+  "Clamp",
+  "Fist",
+  "Electric Plug",
   "Fire",
-  "Kerosine",
+  "Oil Drum",
   "Lighter",
 ];
 
 const CLUE_CARDS = [
-  "Fingerprint",
-  "Muddy Footprint",
+  "Hand",
+  "Shoe",
   "Blood Stain",
-  "Strand of Hair",
-  "Torn Fabric",
+  "DNA Sample",
+  "T-Shirt",
   "Shirt Button",
   "Sewing Thread",
   "Wedding Ring",
   "Wristwatch",
-  "Diamond Necklace",
-  "Broken Glasses",
-  "Leather Wallet",
-  "ID Badge",
+  "Gem Stone",
+  "Glasses",
+  "Purse",
+  "Name Badge",
   "Credit Card",
-  "Grocery Receipt",
-  "Plane Ticket",
-  "Crumpled Note",
-  "Diary",
-  "Torn Photograph",
-  "City Map",
-  "USB Drive",
+  "Receipt",
+  "Ticket",
+  "Memo",
+  "Notebook",
+  "Framed Picture",
+  "World Map",
+  "Floppy Disk",
   "Smartphone",
   "Laptop",
-  "House Keys",
-  "Rare Coin",
-  "Cigarette Butt",
-  "Lighter",
-  "Matchbox",
-  "Pile of Ashes",
-  "Shard of Glass",
-  "Shattered Plate",
-  "Crushed Flower",
-  "Tree Leaf",
-  "Puddle of Water",
-  "Oil Stain",
-  "Spray Paint",
-  "Spilled Ink",
-  "Candy Wrapper",
-  "Empty Wine Bottle",
-  "Coffee Cup",
-  "Lipstick Mark",
-  "Scent of Perfume",
-  "White Powder",
-  "Bullet Casing",
-  "Tool Marks",
-  "Leather Glove",
-  "Ski Mask",
-  "Playing Card",
-  "Dice",
-  "Pocket Mirror",
+  "Key",
+  "Coin",
+  "Cigarette",
+  "Flashlight",
+  "Funeral Urn",
+  "Ice Cube",
+  "Fork and Knife",
+  "Wilted Flower",
+  "Leaf",
+  "Droplet",
+  "Oil Drum",
+  "Artist Palette",
+  "Fountain Pen",
+  "Candy",
+  "Wine Glass",
+  "Hot Beverage",
+  "Kiss Mark",
+  "Lotion Bottle",
+  "Salt Shaker",
+  "Collision",
+  "Hammer",
+  "Glove",
+  "Ninja Mask",
+  "Joker Card",
+  "Game Die",
+  "Mirror",
 ];
+
+// --- EMOJI MAPPING (COMPLETE COVERAGE) ---
+const CARD_ICONS = {
+  // WEAPONS
+  "Kitchen Knife": "🔪",
+  Dagger: "🗡️",
+  "Crossed Swords": "⚔️",
+  "Fire Axe": "🪓",
+  Pickaxe: "⛏️",
+  Hook: "🪝",
+  Scissors: "✂️",
+  "Champagne Bottle": "🍾",
+  Katana: "⚔️",
+  Blade: "🔪",
+  Saw: "🪚",
+  Hammer: "🔨",
+  "Cricket Bat": "🏏",
+  "Field Hockey Stick": "🏑",
+  Wrench: "🔧",
+  Crowbar: "🛠️",
+  Brick: "🧱",
+  "Moai Statue": "🗿",
+  Candlestick: "🕯️",
+  "Frying Pan": "🍳",
+  Stone: "🪨",
+  Pistol: "🔫",
+  "Silenced Gun": "🔫",
+  "Boxing Glove": "🥊",
+  Shotgun: "🔫",
+  "Bow and Arrow": "🏹",
+  Rope: "🪢",
+  Wire: "➰",
+  Necktie: "👔",
+  "Teddy Bear": "🧸",
+  "Plastic Bag": "🛍️",
+  Chain: "⛓️",
+  Scarf: "🧣",
+  Arsenic: "☠️",
+  "Cyanide Pill": "💊",
+  "Venomous Snake": "🐍",
+  Syringe: "💉",
+  "Sleeping Pills": "💤",
+  Chainsaw: "🪚",
+  Explosives: "💣",
+  Dynamite: "🧨",
+  Electrocution: "⚡",
+  Drowning: "🌊",
+  "Push from Heights": "🧗",
+  Vehicle: "🚗",
+  Trophy: "🏆",
+  Screwdriver: "🪛",
+  Clamp: "🗜️",
+  Fist: "👊",
+  "Electric Plug": "🔌",
+  Fire: "🔥",
+  "Oil Drum": "🛢️",
+  Lighter: "🔥",
+
+  // CLUES
+  Hand: "✋",
+  Shoe: "👞",
+  "Blood Stain": "🩸",
+  "DNA Sample": "🧬",
+  "T-Shirt": "👕",
+  "Shirt Button": "🔘",
+  "Sewing Thread": "🧵",
+  "Wedding Ring": "💍",
+  Wristwatch: "⌚",
+  "Gem Stone": "💎",
+  Glasses: "👓",
+  Purse: "👛",
+  "Name Badge": "📛",
+  "Credit Card": "💳",
+  Receipt: "🧾",
+  Ticket: "🎫",
+  Memo: "📝",
+  Notebook: "📓",
+  "Framed Picture": "🖼️",
+  "World Map": "🗺️",
+  "Floppy Disk": "💾",
+  Smartphone: "📱",
+  Laptop: "💻",
+  Key: "🔑",
+  Coin: "🪙",
+  Cigarette: "🚬",
+  Flashlight: "🔦",
+  "Funeral Urn": "⚱️",
+  "Ice Cube": "🧊",
+  "Fork and Knife": "🍽️",
+  "Wilted Flower": "🥀",
+  Leaf: "🍃",
+  Droplet: "💧",
+  "Artist Palette": "🎨",
+  "Fountain Pen": "✒️",
+  Candy: "🍬",
+  "Wine Glass": "🍷",
+  "Hot Beverage": "☕",
+  "Kiss Mark": "💋",
+  "Lotion Bottle": "🧴",
+  "Salt Shaker": "🧂",
+  Collision: "💥",
+  Glove: "🧤",
+  "Ninja Mask": "🥷",
+  "Joker Card": "🃏",
+  "Game Die": "🎲",
+  Mirror: "🪞",
+};
 
 const TILES_DATA = {
   FIXED: {
@@ -524,9 +628,20 @@ const shuffle = (array) => {
   return newArray;
 };
 
+// --- ICON HELPER FUNCTION (NOW USES EMOJIS) ---
+const getCardIcon = (name) => {
+  const icon = CARD_ICONS[name] || "❓"; // Default fallback
+  // Center icon in vertical layouts
+  return (
+    <span className="text-2xl leading-none filter drop-shadow-sm grayscale-[0.2] mb-1 block">
+      {icon}
+    </span>
+  );
+};
+
 // --- Sub-Components (Theming) ---
 
-// 1. Floating Background (Adapted from Emperor)
+// 1. Floating Background
 const FloatingBackground = () => (
   <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
     <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-gray-800 via-gray-900 to-black opacity-80" />
@@ -540,8 +655,7 @@ const FloatingBackground = () => (
   </div>
 );
 
-// 2. Footer Component (Adapted from Emperor)
-// Sticky footer logic ensures it stays at the bottom but doesn't float over content awkwardly
+// 2. Footer Component
 const InvestigationLogo = () => (
   <div className="flex items-center justify-center gap-1 opacity-40 py-2 w-full bg-slate-950/80 backdrop-blur-sm border-t border-slate-900/50 z-50">
     <Search size={12} className="text-green-500" />
@@ -551,7 +665,7 @@ const InvestigationLogo = () => (
   </div>
 );
 
-// 3. Tutorial Modal Content (Restored & Themed)
+// 3. Tutorial Modal Content
 const TutorialModal = ({ onClose }) => (
   <div className="fixed inset-0 z-[100] bg-slate-950/95 flex justify-center overflow-y-auto p-4 animate-in slide-in-from-bottom-10 fade-in duration-300">
     <div className="w-full max-w-4xl relative">
@@ -784,8 +898,17 @@ export default function InvestigationGame() {
 
   useEffect(() => {
     const initAuth = async () => {
+      // FIXED: Added try-catch for custom token to prevent unhandled rejection
       if (typeof __initial_auth_token !== "undefined" && __initial_auth_token) {
-        await signInWithCustomToken(auth, __initial_auth_token);
+        try {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } catch (err) {
+          console.error(
+            "Custom token sign-in failed, falling back to anon",
+            err
+          );
+          await signInAnonymously(auth);
+        }
       } else {
         await signInAnonymously(auth);
       }
@@ -1802,9 +1925,12 @@ export default function InvestigationGame() {
                         {p.means.map((m) => (
                           <div
                             key={m}
-                            className="px-2 py-1.5 rounded text-xs font-medium text-center truncate bg-slate-800 text-red-200 border border-red-900/30"
+                            className="p-1.5 rounded bg-slate-800 border border-red-900/30 flex flex-col items-center justify-center text-center gap-1 min-h-[50px] shadow-sm"
                           >
-                            {m}
+                            {getCardIcon(m)}
+                            <span className="text-[9px] font-bold text-red-200 leading-tight line-clamp-2">
+                              {m}
+                            </span>
                           </div>
                         ))}
                       </div>
@@ -1815,9 +1941,12 @@ export default function InvestigationGame() {
                         {p.clues.map((c) => (
                           <div
                             key={c}
-                            className="px-2 py-1.5 rounded text-xs font-medium text-center truncate bg-slate-800 text-blue-200 border border-blue-900/30"
+                            className="p-1.5 rounded bg-slate-800 border border-blue-900/30 flex flex-col items-center justify-center text-center gap-1 min-h-[50px] shadow-sm"
                           >
-                            {c}
+                            {getCardIcon(c)}
+                            <span className="text-[9px] font-bold text-blue-200 leading-tight line-clamp-2">
+                              {c}
+                            </span>
                           </div>
                         ))}
                       </div>
@@ -1865,13 +1994,16 @@ export default function InvestigationGame() {
                           onClick={() =>
                             setSolveTarget({ ...solveTarget, means: m })
                           }
-                          className={`p-3 rounded border text-xs font-bold transition-all ${
+                          className={`p-2 rounded-lg border flex flex-col items-center justify-center gap-1 transition-all min-h-[80px] shadow-md hover:shadow-lg active:scale-95 ${
                             solveTarget?.means === m
-                              ? "bg-red-600 border-white text-white scale-105 shadow-lg"
+                              ? "bg-red-600 border-white text-white scale-105 shadow-xl ring-2 ring-white/50"
                               : "bg-red-900/50 border-red-700 text-red-200 hover:bg-red-800"
                           }`}
                         >
-                          {m}
+                          {getCardIcon(m)}
+                          <span className="text-xs font-bold leading-tight">
+                            {m}
+                          </span>
                         </button>
                       ))}
                     </div>
@@ -1887,13 +2019,16 @@ export default function InvestigationGame() {
                           onClick={() =>
                             setSolveTarget({ ...solveTarget, clue: c })
                           }
-                          className={`p-3 rounded border text-xs font-bold transition-all ${
+                          className={`p-2 rounded-lg border flex flex-col items-center justify-center gap-1 transition-all min-h-[80px] shadow-md hover:shadow-lg active:scale-95 ${
                             solveTarget?.clue === c
-                              ? "bg-blue-600 border-white text-white scale-105 shadow-lg"
+                              ? "bg-blue-600 border-white text-white scale-105 shadow-xl ring-2 ring-white/50"
                               : "bg-blue-900/50 border-blue-700 text-blue-200 hover:bg-blue-800"
                           }`}
                         >
-                          {c}
+                          {getCardIcon(c)}
+                          <span className="text-xs font-bold leading-tight">
+                            {c}
+                          </span>
                         </button>
                       ))}
                     </div>
@@ -2281,7 +2416,7 @@ export default function InvestigationGame() {
                               if (p.id === user.uid) return;
                               toggleSelection(p.id, "means", m);
                             }}
-                            className={`px-2 py-2 rounded text-xs font-medium text-center truncate cursor-pointer transition-all active:scale-95 touch-manipulation min-h-[36px] flex items-center justify-center ${
+                            className={`p-1.5 rounded-md border flex flex-col items-center justify-center text-center cursor-pointer transition-all active:scale-95 touch-manipulation min-h-[60px] shadow-sm ${
                               isSelected
                                 ? "bg-red-600 text-white font-bold shadow-md scale-105 border border-white"
                                 : isSubmitted
@@ -2294,7 +2429,10 @@ export default function InvestigationGame() {
                               "opacity-50 cursor-not-allowed hover:bg-slate-800 hover:border-red-900/30"
                             }`}
                           >
-                            {m}
+                            {getCardIcon(m)}
+                            <span className="text-[10px] font-bold leading-tight line-clamp-2 w-full">
+                              {m}
+                            </span>
                           </div>
                         );
                       })}
@@ -2321,7 +2459,7 @@ export default function InvestigationGame() {
                               if (p.id === user.uid) return;
                               toggleSelection(p.id, "clue", c);
                             }}
-                            className={`px-2 py-2 rounded text-xs font-medium text-center truncate cursor-pointer transition-all active:scale-95 touch-manipulation min-h-[36px] flex items-center justify-center ${
+                            className={`p-1.5 rounded-md border flex flex-col items-center justify-center text-center cursor-pointer transition-all active:scale-95 touch-manipulation min-h-[60px] shadow-sm ${
                               isSelected
                                 ? "bg-blue-600 text-white font-bold shadow-md scale-105 border border-white"
                                 : isSubmitted
@@ -2334,7 +2472,10 @@ export default function InvestigationGame() {
                               "opacity-50 cursor-not-allowed hover:bg-slate-800 hover:border-blue-900/30"
                             }`}
                           >
-                            {c}
+                            {getCardIcon(c)}
+                            <span className="text-[10px] font-bold leading-tight line-clamp-2 w-full">
+                              {c}
+                            </span>
                           </div>
                         );
                       })}
@@ -2399,23 +2540,25 @@ export default function InvestigationGame() {
                       </div>
                       <div className="grid grid-cols-2 gap-1">
                         <div
-                          className={`border rounded px-1 py-0.5 text-[10px] truncate ${
+                          className={`border rounded px-1 py-0.5 text-[10px] truncate flex items-center justify-center gap-1 ${
                             (isFindWitnessPhase || isGameOverGood) &&
                             pAccusation.isCorrect
                               ? "bg-black/40 border-green-500/20 text-green-200"
                               : "bg-black/40 border-red-500/20 text-red-200"
                           }`}
                         >
+                          {getCardIcon(pAccusation.means)}
                           {pAccusation.means}
                         </div>
                         <div
-                          className={`border rounded px-1 py-0.5 text-[10px] truncate ${
+                          className={`border rounded px-1 py-0.5 text-[10px] truncate flex items-center justify-center gap-1 ${
                             (isFindWitnessPhase || isGameOverGood) &&
                             pAccusation.isCorrect
                               ? "bg-black/40 border-green-500/20 text-green-200"
                               : "bg-black/40 border-blue-500/20 text-blue-200"
                           }`}
                         >
+                          {getCardIcon(pAccusation.clue)}
                           {pAccusation.clue}
                         </div>
                       </div>
@@ -2684,7 +2827,8 @@ export default function InvestigationGame() {
                       Murder Weapon
                     </div>
                     {solveTarget.means ? (
-                      <div className="p-3 bg-red-900/50 border border-red-600 rounded text-red-100 font-bold text-center text-sm">
+                      <div className="p-3 bg-red-900/50 border border-red-600 rounded text-red-100 font-bold text-center text-sm flex items-center justify-center gap-2">
+                        {getCardIcon(solveTarget.means)}
                         {solveTarget.means}
                       </div>
                     ) : (
@@ -2698,7 +2842,8 @@ export default function InvestigationGame() {
                       Evidence on Site
                     </div>
                     {solveTarget.clue ? (
-                      <div className="p-3 bg-blue-900/50 border border-blue-600 rounded text-blue-100 font-bold text-center text-sm">
+                      <div className="p-3 bg-blue-900/50 border border-blue-600 rounded text-blue-100 font-bold text-center text-sm flex items-center justify-center gap-2">
+                        {getCardIcon(solveTarget.clue)}
                         {solveTarget.clue}
                       </div>
                     ) : (
@@ -2782,7 +2927,8 @@ export default function InvestigationGame() {
                     <div className="text-[10px] text-red-300 uppercase font-bold mb-1">
                       Murder Weapon
                     </div>
-                    <div className="text-white font-bold text-sm">
+                    <div className="text-white font-bold text-sm flex items-center justify-center gap-1">
+                      {getCardIcon(gameState.activeAccusation.means)}
                       {gameState.activeAccusation.means}
                     </div>
                   </div>
@@ -2790,7 +2936,8 @@ export default function InvestigationGame() {
                     <div className="text-[10px] text-blue-300 uppercase font-bold mb-1">
                       Evidence on Site
                     </div>
-                    <div className="text-white font-bold text-sm">
+                    <div className="text-white font-bold text-sm flex items-center justify-center gap-1">
+                      {getCardIcon(gameState.activeAccusation.clue)}
                       {gameState.activeAccusation.clue}
                     </div>
                   </div>
@@ -2908,27 +3055,60 @@ export default function InvestigationGame() {
               </span>
             </p>
 
-            <div className="bg-white/10 p-6 rounded-xl border border-white/20 mb-8 w-full max-w-md">
-              <div className="text-sm uppercase tracking-widest text-blue-300 mb-2">
+            <div className="bg-white/10 p-6 rounded-xl border border-white/20 mb-8 w-full max-w-md backdrop-blur-md">
+              <div className="text-sm uppercase tracking-widest text-blue-300 mb-6 font-bold">
                 The Solution
               </div>
-              <div className="text-2xl md:text-3xl font-bold text-white mb-1">
-                {gameState.solution.means} + {gameState.solution.clue}
+
+              <div className="flex justify-center gap-4 mb-6">
+                {/* Means Card */}
+                <div className="bg-slate-900/80 border-2 border-red-500/50 p-4 rounded-xl flex flex-col items-center justify-center w-32 h-36 shadow-2xl transform hover:scale-105 transition-transform">
+                  <div className="text-red-400 text-[10px] font-black uppercase tracking-widest mb-2">
+                    Weapon
+                  </div>
+                  <div className="scale-150 mb-2">
+                    {getCardIcon(gameState.solution.means)}
+                  </div>
+                  <div className="text-sm font-bold text-white leading-tight">
+                    {gameState.solution.means}
+                  </div>
+                </div>
+
+                {/* Plus Sign */}
+                <div className="flex items-center text-white/50">
+                  <span className="text-2xl font-black">+</span>
+                </div>
+
+                {/* Clue Card */}
+                <div className="bg-slate-900/80 border-2 border-blue-500/50 p-4 rounded-xl flex flex-col items-center justify-center w-32 h-36 shadow-2xl transform hover:scale-105 transition-transform">
+                  <div className="text-blue-400 text-[10px] font-black uppercase tracking-widest mb-2">
+                    Evidence
+                  </div>
+                  <div className="scale-150 mb-2">
+                    {getCardIcon(gameState.solution.clue)}
+                  </div>
+                  <div className="text-sm font-bold text-white leading-tight">
+                    {gameState.solution.clue}
+                  </div>
+                </div>
               </div>
-              <div className="text-lg text-blue-200">
+
+              <div className="text-lg text-blue-200 bg-black/20 p-2 rounded-lg inline-block px-6">
                 Culprit:{" "}
-                {
-                  gameState.players.find(
-                    (p) => p.id === gameState.solution.murdererId
-                  )?.name
-                }
+                <span className="text-white font-black">
+                  {
+                    gameState.players.find(
+                      (p) => p.id === gameState.solution.murdererId
+                    )?.name
+                  }
+                </span>
               </div>
             </div>
 
             {gameState.hostId === user.uid && (
               <button
                 onClick={restartGame}
-                className="bg-white text-blue-900 px-8 py-3 rounded-full font-bold hover:scale-105 transition-transform flex items-center gap-2"
+                className="bg-white text-blue-900 px-8 py-3 rounded-full font-bold hover:scale-105 transition-transform flex items-center gap-2 shadow-xl"
               >
                 <RotateCcw size={20} /> Return to Lobby
               </button>
@@ -2949,27 +3129,60 @@ export default function InvestigationGame() {
               The investigation failed or the witness was silenced.
             </p>
 
-            <div className="bg-white/10 p-6 rounded-xl border border-white/20 mb-8 w-full max-w-md">
-              <div className="text-sm uppercase tracking-widest text-red-300 mb-2">
+            <div className="bg-white/10 p-6 rounded-xl border border-white/20 mb-8 w-full max-w-md backdrop-blur-md">
+              <div className="text-sm uppercase tracking-widest text-red-300 mb-6 font-bold">
                 The Solution
               </div>
-              <div className="text-2xl md:text-3xl font-bold text-white mb-1">
-                {gameState.solution.means} + {gameState.solution.clue}
+
+              <div className="flex justify-center gap-4 mb-6">
+                {/* Means Card */}
+                <div className="bg-slate-900/80 border-2 border-red-500/50 p-4 rounded-xl flex flex-col items-center justify-center w-32 h-36 shadow-2xl transform hover:scale-105 transition-transform">
+                  <div className="text-red-400 text-[10px] font-black uppercase tracking-widest mb-2">
+                    Weapon
+                  </div>
+                  <div className="scale-150 mb-2">
+                    {getCardIcon(gameState.solution.means)}
+                  </div>
+                  <div className="text-sm font-bold text-white leading-tight">
+                    {gameState.solution.means}
+                  </div>
+                </div>
+
+                {/* Plus Sign */}
+                <div className="flex items-center text-white/50">
+                  <span className="text-2xl font-black">+</span>
+                </div>
+
+                {/* Clue Card */}
+                <div className="bg-slate-900/80 border-2 border-blue-500/50 p-4 rounded-xl flex flex-col items-center justify-center w-32 h-36 shadow-2xl transform hover:scale-105 transition-transform">
+                  <div className="text-blue-400 text-[10px] font-black uppercase tracking-widest mb-2">
+                    Evidence
+                  </div>
+                  <div className="scale-150 mb-2">
+                    {getCardIcon(gameState.solution.clue)}
+                  </div>
+                  <div className="text-sm font-bold text-white leading-tight">
+                    {gameState.solution.clue}
+                  </div>
+                </div>
               </div>
-              <div className="text-lg text-red-200">
+
+              <div className="text-lg text-red-200 bg-black/20 p-2 rounded-lg inline-block px-6">
                 Culprit:{" "}
-                {
-                  gameState.players.find(
-                    (p) => p.id === gameState.solution.murdererId
-                  )?.name
-                }
+                <span className="text-white font-black">
+                  {
+                    gameState.players.find(
+                      (p) => p.id === gameState.solution.murdererId
+                    )?.name
+                  }
+                </span>
               </div>
             </div>
 
             {gameState.hostId === user.uid && (
               <button
                 onClick={restartGame}
-                className="bg-white text-red-900 px-8 py-3 rounded-full font-bold hover:scale-105 transition-transform flex items-center gap-2"
+                className="bg-white text-red-900 px-8 py-3 rounded-full font-bold hover:scale-105 transition-transform flex items-center gap-2 shadow-xl"
               >
                 <RotateCcw size={20} /> Return to Lobby
               </button>
@@ -2988,4 +3201,3 @@ export default function InvestigationGame() {
 
   return null;
 }
-//final done

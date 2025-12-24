@@ -12,9 +12,9 @@ import {
   setDoc,
   getDoc,
   updateDoc,
+  deleteDoc,
   onSnapshot,
   arrayUnion,
-  arrayRemove,
 } from "firebase/firestore";
 import {
   Search,
@@ -42,13 +42,10 @@ import {
   BookOpen,
   Hammer,
   Sparkles,
-  ThumbsUp,
-  PlayCircle,
-  Home,
-  HatGlasses,
 } from "lucide-react";
 
 // --- Firebase Init ---
+// FIXED: Use system config if available to prevent auth/custom-token-mismatch
 const firebaseConfig = {
   apiKey: "AIzaSyBjIjK53vVJW1y5RaqEFGSFp0ECVDBEe1o",
   authDomain: "game-hub-ff8aa.firebaseapp.com",
@@ -173,6 +170,7 @@ const CLUE_CARDS = [
   "Mirror",
 ];
 
+// --- EMOJI MAPPING (COMPLETE COVERAGE) ---
 const CARD_ICONS = {
   // WEAPONS
   "Kitchen Knife": "🔪",
@@ -618,6 +616,7 @@ const TILES_DATA = {
   ],
 };
 
+// --- Helper Functions ---
 const shuffle = (array) => {
   let currentIndex = array.length,
     randomIndex;
@@ -633,8 +632,10 @@ const shuffle = (array) => {
   return newArray;
 };
 
+// --- ICON HELPER FUNCTION (NOW USES EMOJIS) ---
 const getCardIcon = (name) => {
-  const icon = CARD_ICONS[name] || "❓";
+  const icon = CARD_ICONS[name] || "❓"; // Default fallback
+  // Center icon in vertical layouts
   return (
     <span className="text-2xl leading-none filter drop-shadow-sm grayscale-[0.2] mb-1 block">
       {icon}
@@ -642,7 +643,9 @@ const getCardIcon = (name) => {
   );
 };
 
-// --- Sub-Components ---
+// --- Sub-Components (Theming) ---
+
+// 1. Floating Background
 const FloatingBackground = () => (
   <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
     <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-gray-800 via-gray-900 to-black opacity-80" />
@@ -656,15 +659,17 @@ const FloatingBackground = () => (
   </div>
 );
 
+// 2. Footer Component
 const InvestigationLogo = () => (
   <div className="flex items-center justify-center gap-1 opacity-40 py-2 w-full bg-slate-950/80 backdrop-blur-sm border-t border-slate-900/50 z-50">
-    <HatGlasses size={12} className="text-green-500" />
+    <Search size={12} className="text-green-500" />
     <span className="text-[10px] font-black tracking-widest text-green-500 uppercase">
       INVESTIGATION
     </span>
   </div>
 );
 
+// 3. Tutorial Modal Content
 const TutorialModal = ({ onClose }) => (
   <div className="fixed inset-0 z-[100] bg-slate-950/95 flex justify-center overflow-y-auto p-4 animate-in slide-in-from-bottom-10 fade-in duration-300">
     <div className="w-full max-w-4xl relative">
@@ -674,13 +679,17 @@ const TutorialModal = ({ onClose }) => (
       >
         <X size={24} />
       </button>
+
       <div className="space-y-8 pb-20 mt-12 md:mt-0">
+        {/* Header */}
         <div className="text-center space-y-2">
           <h2 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-green-600">
             GAME GUIDE
           </h2>
           <p className="text-slate-400">Deduction, Deception, and Discovery</p>
         </div>
+
+        {/* Section 1: The Goal */}
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
           <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
             <Target className="text-red-500" /> The Objective
@@ -692,9 +701,162 @@ const TutorialModal = ({ onClose }) => (
             <span className="text-green-400 font-bold">Investigators</span> must
             interpret these clues to find the true{" "}
             <strong className="text-white">Murder Weapon</strong> and{" "}
-            <strong className="text-white">Evidence</strong>.
+            <strong className="text-white">Evidence</strong> before time runs
+            out. Meanwhile, the{" "}
+            <span className="text-red-400 font-bold">Murderer</span> hides among
+            them, trying to mislead the investigation.
           </p>
         </div>
+
+        {/* Section 2: The Roles */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-slate-800/50 border border-blue-500/30 rounded-xl p-5">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="bg-blue-600 p-1.5 rounded text-white">
+                <Search size={16} />
+              </div>
+              <span className="font-bold text-blue-400">Detective</span>
+            </div>
+            <p className="text-sm text-slate-300">
+              Host & Guide. Knows the solution. Cannot speak about the case.
+              Selects tile cards to give hints.
+            </p>
+          </div>
+
+          <div className="bg-slate-800/50 border border-red-500/30 rounded-xl p-5">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="bg-red-600 p-1.5 rounded text-white">
+                <Skull size={16} />
+              </div>
+              <span className="font-bold text-red-400">Murderer</span>
+            </div>
+            <p className="text-sm text-slate-300">
+              The Culprit. Chooses the Means & Clue at the start. Hides identity
+              and tries to sabotage the team.
+            </p>
+          </div>
+
+          <div className="bg-slate-800/50 border border-emerald-500/30 rounded-xl p-5">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="bg-emerald-600 p-1.5 rounded text-white">
+                <Badge size={16} />
+              </div>
+              <span className="font-bold text-emerald-400">Investigator</span>
+            </div>
+            <p className="text-sm text-slate-300">
+              The Team. Discusses clues and submits accusations to solve the
+              crime.
+            </p>
+          </div>
+
+          <div className="bg-slate-800/50 border border-orange-500/30 rounded-xl p-5">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="bg-orange-600 p-1.5 rounded text-white">
+                <Briefcase size={16} />
+              </div>
+              <span className="font-bold text-orange-400">Accomplice</span>
+            </div>
+            <p className="text-sm text-slate-300">
+              (Optional) Knows who the Murderer is. Helps them win without
+              getting caught.
+            </p>
+          </div>
+
+          <div className="bg-slate-800/50 border border-indigo-500/30 rounded-xl p-5 md:col-span-2">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="bg-indigo-600 p-1.5 rounded text-white">
+                <Eye size={16} />
+              </div>
+              <span className="font-bold text-indigo-400">Witness</span>
+            </div>
+            <p className="text-sm text-slate-300">
+              (Optional) Knows the Murderer but not the solution. Must help
+              Investigators without revealing themselves. If the Murderer finds
+              the Witness at the end, the Murderer wins!
+            </p>
+          </div>
+        </div>
+
+        {/* Section 3: Gameplay Loop */}
+        <div className="space-y-4">
+          <h3 className="text-xl font-bold text-white pl-2 border-l-4 border-green-500">
+            How It Works
+          </h3>
+
+          <div className="flex gap-4">
+            <div className="flex-none w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-slate-500">
+              1
+            </div>
+            <div>
+              <h4 className="font-bold text-white">The Crime</h4>
+              <p className="text-sm text-slate-400">
+                Everyone closes their eyes. The Murderer wakes up and selects 1
+                Means card and 1 Clue card from their hand. This becomes the
+                solution.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-4">
+            <div className="flex-none w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-slate-500">
+              2
+            </div>
+            <div>
+              <h4 className="font-bold text-white">The Investigation</h4>
+              <p className="text-sm text-slate-400">
+                The Detective analyzes the solution. They receive random "Scene
+                Tiles" (e.g., Location, Weather, Victim's Clothes). The
+                Detective selects the option on each tile that{" "}
+                <em>best relates</em> to the solution.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-4">
+            <div className="flex-none w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-slate-500">
+              3
+            </div>
+            <div>
+              <h4 className="font-bold text-white">Discussion & Rounds</h4>
+              <p className="text-sm text-slate-400">
+                Investigators discuss the tiles. "Why did the Detective say it
+                was 'Noisy'? Maybe the weapon is a Gun?" <br />
+                The game lasts <strong>3 Rounds</strong>. In each new round, the
+                Detective replaces one old tile with a new one to refine the
+                clues.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-4">
+            <div className="flex-none w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-slate-500">
+              4
+            </div>
+            <div>
+              <h4 className="font-bold text-white">Accusation & Winning</h4>
+              <ul className="text-sm text-slate-400 list-disc ml-4 mt-1 space-y-1">
+                <li>
+                  Investigators can spend their{" "}
+                  <strong className="text-yellow-500">Badge</strong> to make an
+                  accusation at any time.
+                </li>
+                <li>
+                  If <strong>CORRECT</strong>: Investigators Win! (Unless
+                  Murderer finds Witness).
+                </li>
+                <li>
+                  If <strong>WRONG</strong>: The player loses their badge and
+                  can no longer solve.
+                </li>
+                <li>
+                  If all badges are used or rounds end without a solution:{" "}
+                  <strong>Murderer Wins!</strong>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
         <div className="text-center pt-8">
           <button
             onClick={onClose}
@@ -713,7 +875,7 @@ export default function InvestigationGame() {
   const [user, setUser] = useState(null);
   const [view, setView] = useState("menu");
   const [playerName, setPlayerName] = useState("");
-  const [roomCodeInput, setRoomCodeInput] = useState("");
+  const [roomCodeInput, setRoomCodeInput] = useState(""); // Unified input for room code
   const [roomId, setRoomId] = useState(null);
   const [gameState, setGameState] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -721,6 +883,8 @@ export default function InvestigationGame() {
   const [isMaintenance, setIsMaintenance] = useState(false);
 
   // Local Interaction State
+  const [selectedTileIndex, setSelectedTileIndex] = useState(null);
+  const [selectedTileOption, setSelectedTileOption] = useState(null);
   const [solveTarget, setSolveTarget] = useState(null);
   const [showSolveModal, setShowSolveModal] = useState(false);
   const [showIdentity, setShowIdentity] = useState(false);
@@ -729,28 +893,34 @@ export default function InvestigationGame() {
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [showCluesMobile, setShowCluesMobile] = useState(true);
   const [uiAlert, setUiAlert] = useState(null);
+
+  // New State for Witness Hunt Interaction
   const [witnessHuntModalOpen, setWitnessHuntModalOpen] = useState(true);
   const [showSuggestionToast, setShowSuggestionToast] = useState(true);
+
+  // Tutorial State
   const [showTutorial, setShowTutorial] = useState(false);
 
-  // --- Persistence & Auth ---
+  // --- PERSISTENCE: Check for saved room on load ---
   useEffect(() => {
-    // 1. Check Local Storage on Load
-    const savedRoom = localStorage.getItem("inv_roomId");
-    const savedName = localStorage.getItem("inv_name");
-    if (savedName) setPlayerName(savedName);
-    if (savedRoom) {
-      setRoomId(savedRoom);
-      setRoomCodeInput(savedRoom);
+    const savedRoomId = localStorage.getItem("investigation_roomId");
+    if (savedRoomId) {
+      setRoomId(savedRoomId);
+      setRoomCodeInput(savedRoomId);
     }
+  }, []);
 
-    // 2. Init Auth
+  useEffect(() => {
     const initAuth = async () => {
+      // FIXED: Added try-catch for custom token to prevent unhandled rejection
       if (typeof __initial_auth_token !== "undefined" && __initial_auth_token) {
         try {
           await signInWithCustomToken(auth, __initial_auth_token);
         } catch (err) {
-          console.error("Custom token sign-in failed", err);
+          console.error(
+            "Custom token sign-in failed, falling back to anon",
+            err
+          );
           await signInAnonymously(auth);
         }
       } else {
@@ -762,10 +932,25 @@ export default function InvestigationGame() {
     return () => unsubscribe();
   }, []);
 
-  // --- Room Listener ---
+  // Reset Witness Hunt Modal when phase changes
+  useEffect(() => {
+    if (gameState?.phase === "WITNESS_HUNT") {
+      setWitnessHuntModalOpen(true);
+      setShowSuggestionToast(true);
+    } else {
+      setWitnessHuntModalOpen(false);
+    }
+  }, [gameState?.phase]);
+
+  // Show Suggestion Toast if suggestion arrives
+  useEffect(() => {
+    if (gameState?.accompliceSuggestion) {
+      setShowSuggestionToast(true);
+    }
+  }, [gameState?.accompliceSuggestion]);
+
   useEffect(() => {
     if (!roomId || !user) return;
-
     const roomRef = doc(
       db,
       "artifacts",
@@ -781,19 +966,10 @@ export default function InvestigationGame() {
         if (docSnap.exists()) {
           const data = docSnap.data();
 
-          // KICK / TERMINATED CHECK
-          if (data.status === "terminated") {
-            localStorage.removeItem("inv_roomId");
-            setRoomId(null);
-            setView("menu");
-            setGameState(null);
-            setError("Host has ended the session.");
-            return;
-          }
-
+          // KICK CHECK
           const amIInRoom = data.players.find((p) => p.id === user.uid);
           if (!amIInRoom) {
-            localStorage.removeItem("inv_roomId");
+            localStorage.removeItem("investigation_roomId"); // Clear storage if kicked
             setRoomId(null);
             setView("menu");
             setGameState(null);
@@ -802,21 +978,34 @@ export default function InvestigationGame() {
           }
 
           setGameState({ id: docSnap.id, ...data });
-
           if (data.status === "playing" || data.status === "finished")
             setView("game");
           else setView("lobby");
 
+          // Reset local UI if status changed to lobby (restarted)
           if (data.status === "lobby") {
             setShowSolveModal(false);
             setSolveTarget(null);
             setReplacementMode(false);
           }
+
+          // Check for Game Over conditions (All badges used)
+          if (data.status === "playing" && data.phase === "INVESTIGATION") {
+            const activeBadges = data.players.filter(
+              (p) => p.role !== "DETECTIVE" && p.badge === true
+            ).length;
+            if (activeBadges === 0 && !data.activeAccusation) {
+              if (data.hostId === user.uid) {
+                resolveGameBadgesGone(data);
+              }
+            }
+          }
         } else {
-          localStorage.removeItem("inv_roomId");
+          // Room deleted (Host left or room closed)
+          localStorage.removeItem("investigation_roomId"); // Ensure we don't auto-rejoin
           setRoomId(null);
           setView("menu");
-          setError("Room closed.");
+          setError("Room closed by host.");
         }
       },
       (err) => console.error(err)
@@ -824,26 +1013,24 @@ export default function InvestigationGame() {
     return () => unsubscribe();
   }, [roomId, user]);
 
-  // --- Maintenance Check ---
+  // ... existing auth useEffect ...
+
+  // --- ADD THIS EFFECT ---
   useEffect(() => {
     const unsub = onSnapshot(doc(db, "game_hub_settings", "config"), (doc) => {
-      if (doc.exists() && doc.data()[GAME_ID]?.maintenance)
-        setIsMaintenance(true);
-      else setIsMaintenance(false);
+      if (doc.exists()) {
+        const data = doc.data();
+        if (data[GAME_ID]?.maintenance) {
+          setIsMaintenance(true);
+        } else {
+          setIsMaintenance(false);
+        }
+      }
     });
     return () => unsub();
   }, []);
 
-  useEffect(() => {
-    if (gameState?.phase === "WITNESS_HUNT") {
-      setWitnessHuntModalOpen(true);
-      setShowSuggestionToast(true);
-    } else {
-      setWitnessHuntModalOpen(false);
-    }
-  }, [gameState?.phase]);
-
-  // --- Maintenance View ---
+  // --- ADD THIS BLOCK ---
   if (isMaintenance) {
     return (
       <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center text-white p-4 text-center">
@@ -853,26 +1040,62 @@ export default function InvestigationGame() {
             className="text-orange-500 mx-auto mb-4 animate-bounce"
           />
           <h1 className="text-3xl font-bold mb-2">Under Maintenance</h1>
-          <p className="text-gray-400">Crime scene sealed.</p>
+          <p className="text-gray-400">
+            Crime scene sealed. Forensics team is sweeping the area.
+          </p>
         </div>
+        {/* Add Spacing Between Boxes */}
+        <div className="h-8"></div>
+
+        {/* Clickable Second Card */}
+        <a href="https://rawfidkshuvo.github.io/gamehub/">
+          <div className="flex items-center justify-center gap-3 mb-2">
+            <div className="text-center pb-12 animate-pulse">
+              <div className="inline-flex items-center gap-3 px-8 py-4 bg-slate-900/50 rounded-full border border-indigo-500/20 text-indigo-300 font-bold tracking-widest text-sm uppercase backdrop-blur-sm">
+                <Sparkles size={16} /> Visit Gamehub...Try our other releases...{" "}
+                <Sparkles size={16} />
+              </div>
+            </div>
+          </div>
+        </a>
       </div>
     );
   }
 
-  // --- Actions ---
+  // ... existing code: if (view === "menu") { ...
 
-  const handleAlert = (title, message) =>
+  const resolveGameBadgesGone = async (currentState) => {
+    let logs = [{ text: "All badges used. Murderer Escapes!", type: "danger" }];
+    await updateDoc(
+      doc(db, "artifacts", appId, "public", "data", "rooms", roomId),
+      {
+        phase: "GAME_OVER_BAD",
+        logs: arrayUnion(...logs),
+      }
+    );
+  };
+
+  // --- Alert Helpers ---
+  const handleAlert = (title, message) => {
     setUiAlert({ title, message, type: "alert" });
-  const handleConfirm = (title, message, onConfirm) =>
+  };
+
+  const handleConfirm = (title, message, onConfirm) => {
     setUiAlert({ title, message, type: "confirm", onConfirm });
+  };
+
   const closeAlert = () => setUiAlert(null);
+
+  // --- Actions ---
 
   const createRoom = async () => {
     if (!user || !playerName.trim()) return setError("Enter nickname.");
     setLoading(true);
     const newRoomId = Math.random().toString(36).substring(2, 7).toUpperCase();
+    localStorage.setItem("investigation_roomId", newRoomId); // Save ID
+
     const roomData = {
-      roomId: newRoomId,
+      roomId: newRoomId, // Store ID in doc for consistency
       hostId: user.uid,
       players: [
         {
@@ -890,8 +1113,8 @@ export default function InvestigationGame() {
       logs: [],
       accusations: [],
       nextRoundRequests: [],
+      replayRequests: [],
       readyPlayers: [],
-      readyReplay: [], // New for replay feature
       activeAccusation: null,
     };
     try {
@@ -899,8 +1122,6 @@ export default function InvestigationGame() {
         doc(db, "artifacts", appId, "public", "data", "rooms", newRoomId),
         roomData
       );
-      localStorage.setItem("inv_roomId", newRoomId);
-      localStorage.setItem("inv_name", playerName);
       setRoomId(newRoomId);
       setRoomCodeInput(newRoomId);
     } catch (e) {
@@ -926,14 +1147,10 @@ export default function InvestigationGame() {
       const snap = await getDoc(roomRef);
       if (!snap.exists()) throw new Error("Room not found.");
       const data = snap.data();
-      if (data.status === "terminated")
-        throw new Error("This session has ended.");
       if (data.players.length >= 10) throw new Error("Room full.");
+      if (data.status !== "lobby") throw new Error("Game started.");
 
-      // Allow rejoin if already in player list even if started, otherwise only lobby
       const exists = data.players.find((p) => p.id === user.uid);
-      if (!exists && data.status !== "lobby") throw new Error("Game started.");
-
       if (!exists) {
         await updateDoc(roomRef, {
           players: arrayUnion({
@@ -947,8 +1164,7 @@ export default function InvestigationGame() {
           }),
         });
       }
-      localStorage.setItem("inv_roomId", roomCodeInput.toUpperCase());
-      localStorage.setItem("inv_name", playerName);
+      localStorage.setItem("investigation_roomId", roomCodeInput.toUpperCase()); // Save ID
       setRoomId(roomCodeInput.toUpperCase());
     } catch (e) {
       setError(e.message);
@@ -956,11 +1172,22 @@ export default function InvestigationGame() {
     setLoading(false);
   };
 
+  const toggleSetting = async (setting) => {
+    if (!gameState || gameState.hostId !== user.uid) return;
+    const current = gameState.settings?.[setting] || false;
+    await updateDoc(
+      doc(db, "artifacts", appId, "public", "data", "rooms", roomId),
+      {
+        [`settings.${setting}`]: !current,
+      }
+    );
+  };
+
   const leaveRoom = async () => {
     if (!roomId || !user || !gameState) return;
 
-    // Clear local persistence
-    localStorage.removeItem("inv_roomId");
+    // Clear persistence immediately
+    localStorage.removeItem("investigation_roomId");
 
     const roomRef = doc(
       db,
@@ -972,21 +1199,25 @@ export default function InvestigationGame() {
       roomId
     );
 
-    if (gameState.hostId === user.uid) {
-      // HOST LEAVES -> TERMINATE ROOM
-      try {
-        await updateDoc(roomRef, { status: "terminated" });
-      } catch (e) {
-        console.error(e);
+    try {
+      if (gameState.hostId === user.uid) {
+        // Host leaves -> Delete room (sends everyone home via snapshot listener)
+        await deleteDoc(roomRef);
+      } else {
+        // Guest leaves -> Remove from players list
+        const updatedPlayers = gameState.players.filter(
+          (p) => p.id !== user.uid
+        );
+        if (updatedPlayers.length === 0) {
+          await deleteDoc(roomRef); // Cleanup if empty
+        } else {
+          await updateDoc(roomRef, {
+            players: updatedPlayers,
+          });
+        }
       }
-    } else {
-      // GUEST LEAVES -> REMOVE SELF
-      const updatedPlayers = gameState.players.filter((p) => p.id !== user.uid);
-      try {
-        await updateDoc(roomRef, { players: updatedPlayers });
-      } catch (e) {
-        console.error(e);
-      }
+    } catch (e) {
+      console.error("Error leaving room:", e);
     }
 
     setRoomId(null);
@@ -1000,12 +1231,28 @@ export default function InvestigationGame() {
     const updatedPlayers = gameState.players.filter((p) => p.id !== playerId);
     await updateDoc(
       doc(db, "artifacts", appId, "public", "data", "rooms", roomId),
-      { players: updatedPlayers }
+      {
+        players: updatedPlayers,
+      }
+    );
+  };
+
+  const signalReplayReady = async () => {
+    if (!gameState || !user) return;
+    // Don't add duplicate requests
+    if (gameState.replayRequests?.includes(user.uid)) return;
+
+    await updateDoc(
+      doc(db, "artifacts", appId, "public", "data", "rooms", roomId),
+      {
+        replayRequests: arrayUnion(user.uid),
+      }
     );
   };
 
   const restartGame = async () => {
     if (!gameState || gameState.hostId !== user.uid) return;
+
     const resetPlayers = gameState.players.map((p) => ({
       ...p,
       role: null,
@@ -1014,6 +1261,7 @@ export default function InvestigationGame() {
       badge: true,
       ready: true,
     }));
+
     await updateDoc(
       doc(db, "artifacts", appId, "public", "data", "rooms", roomId),
       {
@@ -1029,8 +1277,8 @@ export default function InvestigationGame() {
         accompliceSuggestion: null,
         murdererGuess: null,
         nextRoundRequests: [],
+        replayRequests: [],
         readyPlayers: [],
-        readyReplay: [], // Reset replay readiness
         activeAccusation: null,
       }
     );
@@ -1038,12 +1286,17 @@ export default function InvestigationGame() {
 
   const startGame = async () => {
     if (gameState.players.length < 4) return setError("Need 4+ players.");
+
     const pCount = gameState.players.length;
     let roles = ["DETECTIVE", "MURDERER"];
+
+    // Only add roles if Player Count allows AND Toggle is ON
     if (pCount >= 6 && gameState.settings?.useAccomplice)
       roles.push("ACCOMPLICE");
     if (pCount >= 5 && gameState.settings?.useWitness) roles.push("WITNESS");
+
     while (roles.length < pCount) roles.push("INVESTIGATOR");
+
     roles = shuffle(roles);
 
     const allMeans = shuffle([...MEANS_CARDS]);
@@ -1052,10 +1305,12 @@ export default function InvestigationGame() {
     const players = gameState.players.map((p, i) => {
       if (roles[i] === "DETECTIVE")
         return { ...p, role: roles[i], means: [], clues: [], badge: false };
-      const pMeans = [],
-        pClues = [];
+
+      const pMeans = [];
+      const pClues = [];
       for (let j = 0; j < 4; j++) pMeans.push(allMeans.pop());
       for (let j = 0; j < 4; j++) pClues.push(allClues.pop());
+
       return {
         ...p,
         role: roles[i],
@@ -1067,6 +1322,7 @@ export default function InvestigationGame() {
 
     const mainTile = shuffle([...TILES_DATA.MAIN])[0];
     const subTiles = shuffle([...TILES_DATA.SUBORDINATE]).slice(0, 4);
+
     const activeTiles = [
       { ...TILES_DATA.FIXED, id: "cause", selected: null },
       { ...mainTile, id: "main", selected: null },
@@ -1089,7 +1345,6 @@ export default function InvestigationGame() {
         accusations: [],
         nextRoundRequests: [],
         readyPlayers: [],
-        readyReplay: [], // Clear persistence
         activeAccusation: null,
       }
     );
@@ -1097,20 +1352,12 @@ export default function InvestigationGame() {
 
   // --- Game Logic ---
 
-  const handleReplayReady = async () => {
-    const isReady = gameState.readyReplay?.includes(user.uid);
-    await updateDoc(
-      doc(db, "artifacts", appId, "public", "data", "rooms", roomId),
-      {
-        readyReplay: isReady ? arrayRemove(user.uid) : arrayUnion(user.uid),
-      }
-    );
-  };
-
   const handlePreGameReady = async () => {
     if (gameState.readyPlayers?.includes(user.uid)) return;
+
     const newReadyList = [...(gameState.readyPlayers || []), user.uid];
     const allReady = gameState.players.length === newReadyList.length;
+
     let updates = { readyPlayers: newReadyList };
     if (allReady) {
       updates.phase = "MURDERER_SELECT";
@@ -1119,6 +1366,7 @@ export default function InvestigationGame() {
         type: "danger",
       });
     }
+
     await updateDoc(
       doc(db, "artifacts", appId, "public", "data", "rooms", roomId),
       updates
@@ -1142,9 +1390,12 @@ export default function InvestigationGame() {
   const handleScientistClue = async (tileIndex, optionIndex) => {
     const newTiles = [...gameState.activeTiles];
     newTiles[tileIndex].selected = optionIndex;
+
     await updateDoc(
       doc(db, "artifacts", appId, "public", "data", "rooms", roomId),
-      { activeTiles: newTiles }
+      {
+        activeTiles: newTiles,
+      }
     );
   };
 
@@ -1152,12 +1403,13 @@ export default function InvestigationGame() {
     const allSelected = gameState.activeTiles.every((t) => t.selected !== null);
     if (!allSelected)
       return handleAlert("Incomplete", "Select an option for every tile!");
+
     await updateDoc(
       doc(db, "artifacts", appId, "public", "data", "rooms", roomId),
       {
         phase: "INVESTIGATION",
         logs: arrayUnion({
-          text: `Round ${gameState.round} Clues Revealed!`,
+          text: `Round ${gameState.round} Clues Revealed! Investigators, submit your files when ready.`,
           type: "info",
         }),
         nextRoundRequests: [],
@@ -1177,12 +1429,18 @@ export default function InvestigationGame() {
 
   const nextRound = async (tileToReplaceIndex) => {
     if (tileToReplaceIndex < 2)
-      return handleAlert("Invalid Action", "Cannot replace core tiles.");
+      return handleAlert(
+        "Invalid Action",
+        "You cannot replace the Cause of Death or Main Location tile."
+      );
+    if (gameState.round >= 3) return;
+
     const currentSceneTitles = gameState.activeTiles.map((t) => t.title);
     const available = TILES_DATA.SUBORDINATE.filter(
       (t) => !currentSceneTitles.includes(t.title)
     );
     const newTile = shuffle(available)[0];
+
     const newActiveTiles = [...gameState.activeTiles];
     newActiveTiles[tileToReplaceIndex] = {
       ...newTile,
@@ -1197,7 +1455,9 @@ export default function InvestigationGame() {
         round: gameState.round + 1,
         activeTiles: newActiveTiles,
         logs: arrayUnion({
-          text: `Round ${gameState.round + 1} Begins.`,
+          text: `Round ${
+            gameState.round + 1
+          } Begins. Detective is updating a clue...`,
           type: "neutral",
         }),
       }
@@ -1208,14 +1468,18 @@ export default function InvestigationGame() {
   const submitAccusation = async () => {
     if (!solveTarget) return;
     const { targetId, means, clue } = solveTarget;
+
     const meIndex = gameState.players.findIndex((p) => p.id === user.uid);
     const updatedPlayers = [...gameState.players];
     updatedPlayers[meIndex].badge = false;
+
+    // Check Correctness
     const solution = gameState.solution;
     const isCorrect =
       targetId === solution.murdererId &&
       means === solution.means &&
       clue === solution.clue;
+
     const accusationData = {
       solverId: user.uid,
       solverName: updatedPlayers[meIndex].name,
@@ -1242,27 +1506,30 @@ export default function InvestigationGame() {
         }),
       }
     );
+
     setShowSolveModal(false);
     setSolveTarget(null);
   };
 
   const handleContinueAccusation = async () => {
     if (!gameState.activeAccusation) return;
-    const newVotes = [
-      ...(gameState.activeAccusation.continueVotes || []),
-      user.uid,
-    ];
+    const currentVotes = gameState.activeAccusation.continueVotes || [];
+    if (currentVotes.includes(user.uid)) return;
+
+    const newVotes = [...currentVotes, user.uid];
     const allVoted = gameState.players.length === newVotes.length;
+
     let updates = { "activeAccusation.continueVotes": newVotes };
 
     if (allVoted) {
       updates.activeAccusation = null;
+
       if (gameState.activeAccusation.isCorrect) {
         if (gameState.settings?.useWitness) {
           updates.phase = "WITNESS_HUNT";
           updates.successfulSolvers = [gameState.activeAccusation.solverId];
           updates.logs = arrayUnion({
-            text: "CORRECT! Murderer hunting Witness...",
+            text: "CORRECT! But Murderer can steal win by finding Witness.",
             type: "warning",
           });
         } else {
@@ -1275,29 +1542,12 @@ export default function InvestigationGame() {
         }
       } else {
         updates.logs = arrayUnion({
-          text: `${gameState.activeAccusation.solverName} was WRONG.`,
+          text: `${gameState.activeAccusation.solverName} was WRONG. Game Continues.`,
           type: "danger",
         });
-        // Check for active badges - if all gone, game over bad
-        const activeBadges = gameState.players.filter(
-          (p) => p.role !== "DETECTIVE" && p.badge === true
-        ).length;
-        if (activeBadges === 0) {
-          // Since this player just used one, check if that was the last
-          // Handled by snapshot listener or explicitly here, but let's check explicitly
-          const currentActive = gameState.players.filter(
-            (p) => p.role !== "DETECTIVE" && p.badge === true
-          ).length;
-          if (currentActive === 0) {
-            updates.phase = "GAME_OVER_BAD";
-            updates.logs = arrayUnion({
-              text: "All badges used. Murderer Escapes!",
-              type: "danger",
-            });
-          }
-        }
       }
     }
+
     await updateDoc(
       doc(db, "artifacts", appId, "public", "data", "rooms", roomId),
       updates
@@ -1307,38 +1557,46 @@ export default function InvestigationGame() {
   const handleAccompliceSuggest = async (playerId) => {
     await updateDoc(
       doc(db, "artifacts", appId, "public", "data", "rooms", roomId),
-      { accompliceSuggestion: playerId }
+      {
+        accompliceSuggestion: playerId,
+      }
     );
   };
 
   const attemptFindWitness = async (targetId) => {
     const target = gameState.players.find((p) => p.id === targetId);
-    let nextPhase =
-      target.role === "WITNESS" ? "GAME_OVER_BAD" : "GAME_OVER_GOOD";
-    let logs =
-      target.role === "WITNESS"
-        ? [
-            {
-              text: `Murderer found Witness (${target.name})! Murderer Wins!`,
-              type: "danger",
-            },
-          ]
-        : [
-            {
-              text: `Murderer guessed wrong! Investigators Win!`,
-              type: "success",
-            },
-          ];
+    let nextPhase = "GAME_OVER_GOOD";
+    let logs = [];
+
+    if (target.role === "WITNESS") {
+      nextPhase = "GAME_OVER_BAD";
+      logs.push({
+        text: `Murderer identified the Witness (${target.name})! Murderer Wins!`,
+        type: "danger",
+      });
+    } else {
+      nextPhase = "GAME_OVER_GOOD";
+      logs.push({
+        text: `Murderer guessed wrong! Investigators Win!`,
+        type: "success",
+      });
+    }
+
     await updateDoc(
       doc(db, "artifacts", appId, "public", "data", "rooms", roomId),
-      { phase: nextPhase, logs: arrayUnion(...logs) }
+      {
+        phase: nextPhase,
+        logs: arrayUnion(...logs),
+      }
     );
   };
 
+  // --- Views ---
+
   const RoleCard = ({ role }) => {
     if (!role) return null;
-    let color = "bg-gray-600",
-      icon = User;
+    let color = "bg-gray-600";
+    let icon = User;
     if (role === "DETECTIVE") {
       color = "bg-blue-600";
       icon = Search;
@@ -1359,14 +1617,15 @@ export default function InvestigationGame() {
       color = "bg-indigo-600";
       icon = Eye;
     }
+
+    const displayRole = role.charAt(0) + role.slice(1).toLowerCase();
+
     return (
       <div
         className={`${color} text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-sm`}
       >
         {React.createElement(icon, { size: 12 })}{" "}
-        <span className="whitespace-nowrap">
-          {role.charAt(0) + role.slice(1).toLowerCase()}
-        </span>
+        <span className="whitespace-nowrap">{displayRole}</span>
       </div>
     );
   };
@@ -1374,7 +1633,7 @@ export default function InvestigationGame() {
   if (!user)
     return (
       <div className="h-screen bg-slate-900 text-white flex items-center justify-center">
-        Loading Case Files...
+        Loading...
       </div>
     );
 
@@ -1383,21 +1642,24 @@ export default function InvestigationGame() {
     return (
       <div className="min-h-screen bg-gray-950 text-white flex flex-col items-center justify-center p-4 relative overflow-hidden font-sans">
         <FloatingBackground />
+
         {showTutorial && (
           <TutorialModal onClose={() => setShowTutorial(false)} />
         )}
+
         <div className="z-10 text-center mb-10 animate-in fade-in zoom-in duration-700">
-          <HatGlasses
+          <Search
             size={64}
             className="text-green-500 mx-auto mb-4 animate-bounce drop-shadow-[0_0_15px_rgba(34,197,94,0.5)]"
           />
-          <h1 className="text-3xl sm:text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-b from-green-300 to-green-600 font-serif tracking-widest drop-shadow-md">
+          <h1 className="text-3xl sm:text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-b from-green-300 to-green-600 font-serif tracking-widest drop-shadow-md break-words max-w-full">
             INVESTIGATION
           </h1>
           <p className="text-gray-400 tracking-[0.3em] uppercase mt-2">
             Murder Mystery
           </p>
         </div>
+
         <div className="bg-gray-900/80 backdrop-blur border border-gray-700 p-8 rounded-2xl w-full max-w-md shadow-2xl z-10 animate-in slide-in-from-bottom-10 duration-700 delay-100">
           {error && (
             <div className="bg-red-900/50 text-red-200 p-2 mb-4 rounded text-center text-sm border border-red-800">
@@ -1417,6 +1679,7 @@ export default function InvestigationGame() {
           >
             <Badge size={20} /> Create Case File
           </button>
+
           <div className="flex flex-col sm:flex-row gap-2 mb-4">
             <input
               className="w-full sm:flex-1 bg-black/50 border border-gray-600 p-3 rounded text-white placeholder-gray-500 uppercase font-mono tracking-wider focus:border-green-500 outline-none"
@@ -1439,6 +1702,8 @@ export default function InvestigationGame() {
             <BookOpen size={16} /> How to Play
           </button>
         </div>
+
+        {/* Footer in Menu */}
         <div className="fixed bottom-0 left-0 w-full">
           <InvestigationLogo />
         </div>
@@ -1449,20 +1714,24 @@ export default function InvestigationGame() {
   // --- LOBBY ---
   if (view === "lobby" && gameState) {
     const isHost = gameState.hostId === user.uid;
+    const playerCount = gameState.players.length;
+
     return (
       <div className="min-h-screen bg-gray-950 text-white flex flex-col items-center justify-center p-6 relative pb-16">
         <FloatingBackground />
+
         {showTutorial && (
           <TutorialModal onClose={() => setShowTutorial(false)} />
         )}
+
         <div className="z-10 w-full max-w-lg bg-gray-800/90 p-8 rounded-2xl border border-gray-700 shadow-2xl mb-4">
           <div className="flex justify-between items-center mb-8 border-b border-gray-700 pb-4">
             <h2 className="text-2xl font-serif text-green-500">
-              Case: {gameState.roomId}
+              Case File: {gameState.roomId}
             </h2>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 text-sm text-gray-400">
-                <User size={16} /> {gameState.players.length}/10
+                <User size={16} /> {playerCount}/10
               </div>
               <button
                 onClick={() => setShowLeaveConfirm(true)}
@@ -1473,12 +1742,14 @@ export default function InvestigationGame() {
               </button>
             </div>
           </div>
+
+          {/* Settings Section */}
           <div className="bg-gray-900/50 p-4 rounded-xl border border-gray-700 flex justify-between items-center mb-6">
             <div className="flex items-center gap-2 text-gray-300 font-bold">
               <Settings size={18} /> Settings
             </div>
             <div className="flex gap-4">
-              {gameState.players.length >= 6 && (
+              {playerCount >= 6 && (
                 <label
                   className={`flex items-center gap-2 cursor-pointer ${
                     !isHost && "opacity-50 pointer-events-none"
@@ -1487,13 +1758,13 @@ export default function InvestigationGame() {
                   <input
                     type="checkbox"
                     checked={gameState.settings?.useAccomplice || false}
-                    onChange={() => isHost && toggleSetting("useAccomplice")}
+                    onChange={() => toggleSetting("useAccomplice")}
                     className="w-4 h-4 accent-green-500 rounded"
                   />
                   <span className="text-sm">Accomp.</span>
                 </label>
               )}
-              {gameState.players.length >= 5 && (
+              {playerCount >= 5 && (
                 <label
                   className={`flex items-center gap-2 cursor-pointer ${
                     !isHost && "opacity-50 pointer-events-none"
@@ -1502,27 +1773,35 @@ export default function InvestigationGame() {
                   <input
                     type="checkbox"
                     checked={gameState.settings?.useWitness || false}
-                    onChange={() => isHost && toggleSetting("useWitness")}
+                    onChange={() => toggleSetting("useWitness")}
                     className="w-4 h-4 accent-green-500 rounded"
                   />
                   <span className="text-sm">Witness</span>
                 </label>
               )}
+              {playerCount < 5 && (
+                <span className="text-xs text-gray-500">
+                  Need 5+ players for extra roles
+                </span>
+              )}
             </div>
           </div>
-          <div className="space-y-3 mb-8 max-h-60 overflow-y-auto">
+
+          <div className="space-y-3 mb-8">
             {gameState.players.map((p) => (
               <div
                 key={p.id}
                 className="flex items-center justify-between bg-gray-900 p-4 rounded border border-gray-700"
               >
-                <span
-                  className={`font-bold ${
-                    p.id === user.uid ? "text-green-500" : "text-gray-300"
-                  }`}
-                >
-                  {p.name} {p.id === gameState.hostId && "👑"}
-                </span>
+                <div className="flex items-center gap-3">
+                  <span
+                    className={`font-bold ${
+                      p.id === user.uid ? "text-green-500" : "text-gray-300"
+                    }`}
+                  >
+                    {p.name} {p.id === gameState.hostId && "👑"}
+                  </span>
+                </div>
                 <div className="flex items-center gap-4">
                   <span className="text-green-600 flex items-center gap-1 text-sm">
                     <CheckCircle size={14} /> Ready
@@ -1538,7 +1817,13 @@ export default function InvestigationGame() {
                 </div>
               </div>
             ))}
+            {gameState.players.length < 4 && (
+              <div className="text-center text-gray-500 animate-pulse italic">
+                Waiting for more investigators...
+              </div>
+            )}
           </div>
+
           {isHost ? (
             <button
               onClick={startGame}
@@ -1557,17 +1842,19 @@ export default function InvestigationGame() {
             </div>
           )}
         </div>
+
+        {/* Footer */}
         <div className="fixed bottom-0 left-0 w-full">
           <InvestigationLogo />
         </div>
+
+        {/* Leave Confirmation Modal */}
         {showLeaveConfirm && (
           <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
             <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 max-w-sm w-full text-center shadow-2xl">
               <h3 className="text-xl font-bold text-white mb-2">Leave Case?</h3>
               <p className="text-slate-400 mb-6 text-sm">
-                {isHost
-                  ? "As Host, leaving will terminate the session for everyone."
-                  : "You will be removed from the lobby."}
+                Are you sure? You will be removed from the lobby.
               </p>
               <div className="grid grid-cols-2 gap-3">
                 <button
@@ -1593,12 +1880,25 @@ export default function InvestigationGame() {
   // --- GAME ---
   if (view === "game" && gameState) {
     const me = gameState.players.find((p) => p.id === user.uid);
-    if (!me) return <div className="p-10 text-white">Loading...</div>;
+    if (!me)
+      return (
+        <div
+          onClick={() => window.location.reload()}
+          className="p-10 text-white cursor-pointer"
+        >
+          You were removed. Click to reload.
+        </div>
+      );
 
+    // Derived Knowledge Logic
     let knownRoles = {};
     knownRoles[me.id] = me.role;
-    if (me.role === "DETECTIVE")
+
+    // Detective knows everyone
+    if (me.role === "DETECTIVE") {
       gameState.players.forEach((p) => (knownRoles[p.id] = p.role));
+    }
+
     if (me.role === "MURDERER") {
       const acc = gameState.players.find((p) => p.role === "ACCOMPLICE");
       if (acc) knownRoles[acc.id] = "ACCOMPLICE";
@@ -1607,24 +1907,34 @@ export default function InvestigationGame() {
       const mur = gameState.players.find((p) => p.role === "MURDERER");
       if (mur) knownRoles[mur.id] = "MURDERER";
     }
-    if (me.role === "WITNESS")
+    if (me.role === "WITNESS") {
       gameState.players.forEach((p) => {
         if (p.role === "MURDERER") knownRoles[p.id] = "MURDERER";
       });
+    }
 
     const isScientist = me.role === "DETECTIVE";
-    const isHost = gameState.hostId === user.uid;
+    const isMurderer = me.role === "MURDERER";
+    const isAccomplice = me.role === "ACCOMPLICE";
+
+    const isPreGamePhase = gameState.phase === "PRE_GAME_MURDER";
+    const isMurdererSelectPhase = gameState.phase === "MURDERER_SELECT";
+    const isScientistPhase = gameState.phase === "DETECTIVE_TURN";
+    const isInvestigationPhase = gameState.phase === "INVESTIGATION";
+    const isFindWitnessPhase = gameState.phase === "WITNESS_HUNT";
+    const isGameOverGood = gameState.phase === "GAME_OVER_GOOD";
 
     const toggleSelection = (pId, type, item) => {
-      if (isScientist || !me.badge || gameState.phase !== "INVESTIGATION")
-        return;
+      if (isScientist || !me.badge || !isInvestigationPhase) return;
+
       setSolveTarget((prev) => {
-        if (prev?.targetId !== pId)
+        if (prev?.targetId !== pId) {
           return {
             targetId: pId,
             [type]: item,
             [type === "means" ? "clue" : "means"]: null,
           };
+        }
         const newState = { ...prev };
         if (newState[type] === item) newState[type] = null;
         else newState[type] = item;
@@ -1632,217 +1942,30 @@ export default function InvestigationGame() {
       });
     };
 
+    // Everyone Requested Check
     const everyoneRequested = gameState.players
       .filter((p) => p.role !== "DETECTIVE")
-      .every(
-        (p) =>
-          gameState.nextRoundRequests?.includes(p.id) ||
-          gameState.accusations?.some((acc) => acc.solverId === p.id)
-      );
+      .every((p) => {
+        const hasRequested = gameState.nextRoundRequests?.includes(p.id);
+        const hasSubmitted = gameState.accusations?.some(
+          (acc) => acc.solverId === p.id
+        );
+        return hasRequested || hasSubmitted;
+      });
+
+    // My Accusation
     const myAccusation = gameState.accusations?.find(
       (acc) => acc.solverId === user.uid
     );
 
-    // --- GAME OVER SCREEN (Common Logic) ---
-    const isGameOver =
-      gameState.phase === "GAME_OVER_GOOD" ||
-      gameState.phase === "GAME_OVER_BAD";
-
-    if (isGameOver) {
-      const isGood = gameState.phase === "GAME_OVER_GOOD";
-      const readyCount = (gameState.readyReplay || []).length;
-      // Host counts players excluding themselves usually, or total players minus 1 (since host controls it)
-      // But let's assume Host also counts as a player for total count, but Host controls button.
-      // Logic: Host waits for Guests. Guests = Total Players - 1 (Host).
-      const guestsCount = gameState.players.length - 1;
-      const allGuestsReady = readyCount >= guestsCount;
-
-      return (
-        <div
-          className={`fixed inset-0 ${
-            isGood ? "bg-blue-900/95" : "bg-red-950/95"
-          } z-50 flex flex-col items-center justify-center p-6 text-center`}
-        >
-          {isGood ? (
-            <Badge size={96} className="text-yellow-400 mb-6 shadow-xl" />
-          ) : (
-            <Skull size={96} className="text-red-500 mb-6 shadow-xl" />
-          )}
-          <h1 className="text-4xl md:text-6xl font-black text-white mb-4">
-            {isGood ? "INVESTIGATORS WIN" : "MURDERER WINS"}
-          </h1>
-          <p
-            className={`${
-              isGood ? "text-blue-200" : "text-red-200"
-            } text-lg md:text-xl max-w-lg mb-8`}
-          >
-            {isGood
-              ? "The truth has been revealed."
-              : "The investigation failed."}
-          </p>
-
-          <div className="bg-white/10 p-6 rounded-xl border border-white/20 mb-8 w-full max-w-md backdrop-blur-md">
-            <div
-              className={`text-sm uppercase tracking-widest ${
-                isGood ? "text-blue-300" : "text-red-300"
-              } mb-6 font-bold`}
-            >
-              The Solution
-            </div>
-            <div className="flex justify-center gap-4 mb-6">
-              <div className="bg-slate-900/80 border-2 border-red-500/50 p-4 rounded-xl flex flex-col items-center justify-center w-32 h-36">
-                <div className="scale-150 mb-2">
-                  {getCardIcon(gameState.solution?.means)}
-                </div>
-                <div className="text-sm font-bold text-white leading-tight">
-                  {gameState.solution?.means}
-                </div>
-              </div>
-              <div className="flex items-center text-white/50">
-                <span className="text-2xl font-black">+</span>
-              </div>
-              <div className="bg-slate-900/80 border-2 border-blue-500/50 p-4 rounded-xl flex flex-col items-center justify-center w-32 h-36">
-                <div className="scale-150 mb-2">
-                  {getCardIcon(gameState.solution?.clue)}
-                </div>
-                <div className="text-sm font-bold text-white leading-tight">
-                  {gameState.solution?.clue}
-                </div>
-              </div>
-            </div>
-            <div className="text-lg bg-black/20 p-2 rounded-lg inline-block px-6 text-gray-300">
-              Culprit:{" "}
-              <span className="text-white font-black">
-                {
-                  gameState.players.find(
-                    (p) => p.id === gameState.solution?.murdererId
-                  )?.name
-                }
-              </span>
-            </div>
-          </div>
-
-          <div className="w-full max-w-md space-y-3">
-            {/* REPLAY CONTROLS */}
-            {isHost ? (
-              <div className="space-y-3">
-                <div className="text-sm font-bold text-white/70 uppercase tracking-widest">
-                  {allGuestsReady
-                    ? "Everyone is Ready"
-                    : `Waiting for players (${readyCount}/${guestsCount})`}
-                </div>
-
-                {/* Progress Bar for Host */}
-                <div className="w-full bg-black/30 h-2 rounded-full overflow-hidden mb-4">
-                  <div
-                    className="bg-green-500 h-full transition-all duration-500"
-                    style={{
-                      width: `${
-                        (readyCount / Math.max(1, guestsCount)) * 100
-                      }%`,
-                    }}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    onClick={restartGame}
-                    disabled={!allGuestsReady}
-                    className={`py-3 rounded-full font-bold flex items-center justify-center gap-2 transition-all ${
-                      allGuestsReady
-                        ? "bg-white text-black hover:scale-105 shadow-xl"
-                        : "bg-gray-700 text-gray-400 cursor-not-allowed"
-                    }`}
-                  >
-                    <PlayCircle size={20} /> New Game
-                  </button>
-                  <button
-                    onClick={() => {
-                      restartGame(); /* Actually logic to return lobby is same reset but keeping state lobby */
-                    }}
-                    disabled={!allGuestsReady}
-                    className={`py-3 rounded-full font-bold flex items-center justify-center gap-2 transition-all ${
-                      allGuestsReady
-                        ? "bg-black/40 text-white hover:bg-black/60 border border-white/20"
-                        : "bg-gray-800/50 text-gray-500 border border-gray-700 cursor-not-allowed"
-                    }`}
-                  >
-                    <RotateCcw size={20} /> Lobby
-                  </button>
-                </div>
-                <div className="pt-4 border-t border-white/10 mt-4">
-                  <button
-                    onClick={leaveRoom}
-                    className="text-red-400 text-sm hover:text-white flex items-center justify-center gap-2 mx-auto"
-                  >
-                    <LogOut size={14} /> Terminate Session
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <button
-                  onClick={handleReplayReady}
-                  className={`w-full py-4 rounded-full font-black text-lg transition-all transform flex items-center justify-center gap-2 ${
-                    gameState.readyReplay?.includes(user.uid)
-                      ? "bg-green-500 text-white scale-105 shadow-lg shadow-green-500/50"
-                      : "bg-white text-black hover:bg-gray-100"
-                  }`}
-                >
-                  {gameState.readyReplay?.includes(user.uid) ? (
-                    <>
-                      <CheckCircle size={24} /> READY FOR NEXT
-                    </>
-                  ) : (
-                    <>
-                      <ThumbsUp size={24} /> READY FOR ANOTHER?
-                    </>
-                  )}
-                </button>
-                <div className="text-xs text-white/50 uppercase font-bold mt-2">
-                  Waiting for Host to restart...
-                </div>
-                <button
-                  onClick={() => setShowLeaveConfirm(true)}
-                  className="mt-4 text-white/40 hover:text-white text-sm flex items-center justify-center gap-1 mx-auto"
-                >
-                  <LogOut size={14} /> Leave Room
-                </button>
-              </div>
-            )}
-          </div>
-          {/* Leave Confirm for Game Over Screen */}
-          {showLeaveConfirm && (
-            <div className="fixed inset-0 bg-black/90 z-[60] flex items-center justify-center p-4">
-              <div className="bg-slate-800 p-6 rounded-xl text-center">
-                <h3 className="text-white font-bold mb-4">Leave?</h3>
-                <div className="flex gap-4">
-                  <button
-                    onClick={() => setShowLeaveConfirm(false)}
-                    className="bg-slate-600 px-4 py-2 rounded text-white"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={leaveRoom}
-                    className="bg-red-600 px-4 py-2 rounded text-white"
-                  >
-                    Leave
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    // --- PHASE 0: PRE-GAME ---
-    if (gameState.phase === "PRE_GAME_MURDER") {
+    // --- PHASE 0: PRE-GAME MURDER PLANNING ---
+    if (isPreGamePhase) {
       const isReady = gameState.readyPlayers?.includes(user.uid);
+
       return (
         <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col relative pb-16">
           <FloatingBackground />
+          {/* Top Action Bar */}
           <div className="bg-slate-800 p-3 shadow-lg z-20 flex justify-between items-center sticky top-0 border-b border-slate-700">
             <div>
               <div className="text-xs text-slate-400 font-bold uppercase">
@@ -1864,11 +1987,14 @@ export default function InvestigationGame() {
               {isReady ? "Waiting for others..." : "Ready for Murder"}
             </button>
           </div>
+
+          {/* Player Grid (Read Only) */}
           <div className="flex-1 overflow-y-auto p-4 bg-transparent z-10">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 max-w-7xl mx-auto pb-20">
               {gameState.players.map((p) => {
                 const isMe = p.id === user.uid;
                 const roleVisible = knownRoles[p.id] || p.role === "DETECTIVE";
+
                 return (
                   <div
                     key={p.id}
@@ -1934,9 +2060,9 @@ export default function InvestigationGame() {
       );
     }
 
-    // --- PHASE 1: MURDERER SELECT ---
-    if (gameState.phase === "MURDERER_SELECT") {
-      if (me.role === "MURDERER" || me.role === "ACCOMPLICE") {
+    // --- PHASE 1: MURDERER SELECT SCREEN ---
+    if (isMurdererSelectPhase) {
+      if (isMurderer || isAccomplice) {
         return (
           <div className="min-h-screen bg-red-950 text-white p-4 flex flex-col items-center justify-center relative pb-16">
             <FloatingBackground />
@@ -1946,12 +2072,13 @@ export default function InvestigationGame() {
                   COMMIT THE CRIME
                 </h1>
                 <p className="text-red-200 mb-4 max-w-md mx-auto text-sm md:text-base">
-                  {me.role === "MURDERER"
+                  {isMurderer
                     ? "Select 1 Murder Weapon and 1 Evidence."
                     : "The Murderer is selecting the weapon and evidence. Watch closely."}
                 </p>
               </div>
-              {me.role === "MURDERER" ? (
+
+              {isMurderer ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-4xl mx-auto flex-1 overflow-y-auto pb-32">
                   <div className="bg-red-900/30 p-4 rounded-xl border border-red-800 h-fit">
                     <h3 className="text-red-400 font-bold mb-2 flex items-center gap-2 text-sm">
@@ -2015,7 +2142,8 @@ export default function InvestigationGame() {
                 </div>
               )}
             </div>
-            {me.role === "MURDERER" && (
+
+            {isMurderer && (
               <div className="fixed bottom-12 left-0 w-full p-4 flex justify-center z-40 pointer-events-none">
                 <button
                   disabled={!solveTarget?.means || !solveTarget?.clue}
@@ -2045,6 +2173,9 @@ export default function InvestigationGame() {
                 <p className="text-slate-300">
                   The Murderer is choosing the Murder Weapon and Evidence.
                 </p>
+                <p className="text-slate-500 text-sm mt-4">
+                  Study everyone's cards carefully while you wait.
+                </p>
               </div>
             </div>
             <div className="fixed bottom-0 left-0 w-full z-50">
@@ -2060,7 +2191,10 @@ export default function InvestigationGame() {
               <h2 className="text-4xl font-black text-slate-500 mb-4">
                 EYES CLOSED
               </h2>
-              <p className="text-slate-600">The Murder is taking place.</p>
+              <p className="text-slate-600">
+                The Murder is taking place. You will be informed once the
+                detective finishes examining the crime scene.
+              </p>
             </div>
             <div className="fixed bottom-0 left-0 w-full z-50">
               <InvestigationLogo />
@@ -2070,15 +2204,18 @@ export default function InvestigationGame() {
       }
     }
 
-    // --- MAIN GAMEPLAY UI ---
+    // --- MAIN GAME UI ---
+
     return (
       <div className="min-h-screen bg-slate-950 text-slate-100 font-sans flex flex-col relative overflow-hidden pb-12">
         <FloatingBackground />
+
+        {/* Tutorial Modal in Game View */}
         {showTutorial && (
           <TutorialModal onClose={() => setShowTutorial(false)} />
         )}
 
-        {/* Top Bar */}
+        {/* Top Bar: Info & Roles */}
         <div className="bg-slate-900 border-b border-slate-800 p-2 px-3 flex justify-between items-center shadow-md z-20 sticky top-0">
           <div className="flex items-center gap-3">
             <div className="font-serif font-black text-xl tracking-wider text-green-500">
@@ -2102,6 +2239,7 @@ export default function InvestigationGame() {
               </div>
             </div>
           </div>
+
           <div className="flex items-center gap-2">
             <div className="text-center mr-2">
               <span className="text-[10px] text-slate-500 uppercase font-bold block">
@@ -2111,7 +2249,8 @@ export default function InvestigationGame() {
                 {gameState.round}/3
               </span>
             </div>
-            {isScientist && gameState.phase === "DETECTIVE_TURN" && (
+
+            {isScientist && isScientistPhase && (
               <button
                 onClick={finishScientistPhase}
                 className="bg-green-600 hover:bg-green-500 text-white px-3 py-1.5 rounded text-xs font-bold shadow-lg animate-pulse"
@@ -2119,30 +2258,31 @@ export default function InvestigationGame() {
                 Confirm
               </button>
             )}
-            {gameState.phase === "INVESTIGATION" &&
-              isScientist &&
-              gameState.round < 3 && (
-                <button
-                  disabled={!everyoneRequested}
-                  onClick={() => setReplacementMode(!replacementMode)}
-                  className={`${
-                    replacementMode
-                      ? "bg-red-500 animate-pulse"
-                      : everyoneRequested
-                      ? "bg-blue-600"
-                      : "bg-slate-700 opacity-50 cursor-not-allowed"
-                  } hover:brightness-110 text-white px-3 py-1.5 rounded text-xs font-bold shadow-lg transition-colors flex items-center gap-1`}
-                >
-                  {replacementMode ? "Select Tile" : "Next Rnd"}{" "}
-                  {!everyoneRequested && (
-                    <span className="text-[10px] bg-black/30 px-1 rounded">
-                      {gameState.nextRoundRequests?.length || 0}/
-                      {gameState.players.length - 1}
-                    </span>
-                  )}
-                </button>
-              )}
-            {gameState.phase === "INVESTIGATION" &&
+
+            {isInvestigationPhase && isScientist && gameState.round < 3 && (
+              <button
+                disabled={!everyoneRequested}
+                onClick={() => setReplacementMode(!replacementMode)}
+                className={`${
+                  replacementMode
+                    ? "bg-red-500 animate-pulse"
+                    : everyoneRequested
+                    ? "bg-blue-600"
+                    : "bg-slate-700 opacity-50 cursor-not-allowed"
+                } 
+                     hover:brightness-110 text-white px-3 py-1.5 rounded text-xs font-bold shadow-lg transition-colors flex items-center gap-1`}
+              >
+                {replacementMode ? "Select Tile" : "Next Rnd"}
+                {!everyoneRequested && (
+                  <span className="text-[10px] bg-black/30 px-1 rounded">
+                    {gameState.nextRoundRequests?.length || 0}/
+                    {gameState.players.length - 1}
+                  </span>
+                )}
+              </button>
+            )}
+
+            {isInvestigationPhase &&
               !isScientist &&
               !myAccusation &&
               !gameState.nextRoundRequests?.includes(user.uid) &&
@@ -2154,18 +2294,25 @@ export default function InvestigationGame() {
                   Req. Next
                 </button>
               )}
-            {gameState.phase === "INVESTIGATION" &&
+            {isInvestigationPhase &&
               !isScientist &&
               gameState.nextRoundRequests?.includes(user.uid) && (
                 <div className="text-[10px] text-green-400 font-bold bg-green-900/30 px-2 py-1 rounded border border-green-800">
                   Ready
                 </div>
               )}
+
             <button
               onClick={() => setShowLogs(true)}
               className="p-2 hover:bg-slate-800 rounded-full text-slate-400 hover:text-white"
             >
               <History size={18} />
+            </button>
+            <button
+              onClick={() => setShowTutorial(true)}
+              className="p-2 hover:bg-slate-800 rounded-full text-slate-400 hover:text-white"
+            >
+              <BookOpen size={18} />
             </button>
             <button
               onClick={() => setShowLeaveConfirm(true)}
@@ -2176,7 +2323,7 @@ export default function InvestigationGame() {
           </div>
         </div>
 
-        {/* Mobile Clue Toggle */}
+        {/* Clues Toggle Mobile */}
         <div className="bg-slate-800/80 p-2 flex justify-center md:hidden border-b border-slate-700 z-10">
           <button
             onClick={() => setShowCluesMobile(!showCluesMobile)}
@@ -2199,20 +2346,25 @@ export default function InvestigationGame() {
                 <div
                   key={tile.id}
                   onClick={() => {
-                    if (replacementMode && isScientist && tIdx >= 2)
+                    if (replacementMode && isScientist && tIdx >= 2) {
                       nextRound(tIdx);
+                    }
                   }}
-                  className={`w-40 bg-slate-800 rounded-lg border-2 flex flex-col relative shadow-lg transition-all ${
-                    replacementMode && tIdx >= 2 && isScientist
-                      ? "border-red-500 cursor-pointer hover:bg-red-900/20 scale-105"
-                      : isScientist &&
-                        gameState.phase === "DETECTIVE_TURN" &&
-                        "hover:border-blue-500/50"
-                  } ${
-                    tile.selected === null
-                      ? "border-slate-700"
-                      : "border-slate-600"
-                  } ${replacementMode && tIdx < 2 && "opacity-50"}`}
+                  className={`w-40 bg-slate-800 rounded-lg border-2 flex flex-col relative shadow-lg transition-all
+                    ${
+                      replacementMode && tIdx >= 2 && isScientist
+                        ? "border-red-500 cursor-pointer hover:bg-red-900/20 scale-105"
+                        : isScientist &&
+                          isScientistPhase &&
+                          "hover:border-blue-500/50"
+                    } 
+                    ${
+                      tile.selected === null
+                        ? "border-slate-700"
+                        : "border-slate-600"
+                    }
+                    ${replacementMode && tIdx < 2 && "opacity-50"} 
+                  `}
                 >
                   {replacementMode && tIdx >= 2 && isScientist && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10 text-red-500 font-bold">
@@ -2230,33 +2382,34 @@ export default function InvestigationGame() {
                   >
                     {tile.title}
                   </div>
+
                   <div className="p-1.5 space-y-0.5">
-                    {tile.options.map((opt, oIdx) => (
-                      <div
-                        key={oIdx}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (
-                            isScientist &&
-                            gameState.phase === "DETECTIVE_TURN"
-                          )
-                            handleScientistClue(tIdx, oIdx);
-                        }}
-                        className={`text-[10px] px-1.5 py-1 rounded cursor-pointer flex justify-between items-center transition-colors ${
-                          tile.selected === oIdx
-                            ? "bg-red-600 text-white font-bold shadow-md ring-1 ring-red-400"
-                            : isScientist &&
-                              gameState.phase === "DETECTIVE_TURN"
-                            ? "hover:bg-slate-700 text-slate-300"
-                            : "text-slate-500 opacity-50"
-                        }`}
-                      >
-                        <span className="truncate">{opt}</span>
-                        {tile.selected === oIdx && (
-                          <div className="w-1.5 h-1.5 bg-white rounded-full ml-1 shrink-0" />
-                        )}
-                      </div>
-                    ))}
+                    {tile.options.map((opt, oIdx) => {
+                      const isSelected = tile.selected === oIdx;
+                      return (
+                        <div
+                          key={oIdx}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (isScientist && isScientistPhase) {
+                              handleScientistClue(tIdx, oIdx);
+                            }
+                          }}
+                          className={`text-[10px] px-1.5 py-1 rounded cursor-pointer flex justify-between items-center transition-colors ${
+                            isSelected
+                              ? "bg-red-600 text-white font-bold shadow-md ring-1 ring-red-400"
+                              : isScientist && isScientistPhase
+                              ? "hover:bg-slate-700 text-slate-300"
+                              : "text-slate-500 opacity-50"
+                          }`}
+                        >
+                          <span className="truncate">{opt}</span>
+                          {isSelected && (
+                            <div className="w-1.5 h-1.5 bg-white rounded-full ml-1 shrink-0" />
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               ))}
@@ -2264,7 +2417,7 @@ export default function InvestigationGame() {
           </div>
         )}
 
-        {/* Main Grid */}
+        {/* Players Grid */}
         <div className="flex-1 overflow-y-auto p-4 bg-transparent relative z-10">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 max-w-7xl mx-auto pb-32">
             {gameState.players.map((p) => {
@@ -2275,14 +2428,16 @@ export default function InvestigationGame() {
                 gameState.phase.includes("GAME_OVER");
               const isTarget = solveTarget?.targetId === p.id;
               const isSuggested = gameState.accompliceSuggestion === p.id;
+
               const isAccusedByMe = myAccusation?.targetId === p.id;
               const pAccusation = gameState.accusations?.find(
                 (acc) => acc.solverId === p.id
               );
+
               const showWitnessButtons =
-                gameState.phase === "WITNESS_HUNT" &&
+                isFindWitnessPhase &&
                 !witnessHuntModalOpen &&
-                (me.role === "ACCOMPLICE" || me.role === "MURDERER") &&
+                (isAccomplice || isMurderer) &&
                 p.role !== "DETECTIVE" &&
                 p.role !== "MURDERER" &&
                 p.role !== "ACCOMPLICE";
@@ -2290,22 +2445,25 @@ export default function InvestigationGame() {
               return (
                 <div
                   key={p.id}
-                  className={`relative bg-slate-900 border rounded-xl overflow-hidden shadow-lg transition-all ${
-                    isMe
-                      ? "border-blue-500/30 ring-1 ring-blue-900/50"
-                      : "border-slate-800"
-                  } ${
-                    gameState.phase === "WITNESS_HUNT" &&
-                    isSuggested &&
-                    me.role === "MURDERER"
-                      ? "ring-4 ring-yellow-500 scale-105"
-                      : ""
-                  } ${
-                    isAccusedByMe
-                      ? "border-yellow-500/50 ring-1 ring-yellow-500/30"
-                      : ""
-                  }`}
+                  className={`relative bg-slate-900 border rounded-xl overflow-hidden shadow-lg transition-all 
+                     ${
+                       isMe
+                         ? "border-blue-500/30 ring-1 ring-blue-900/50"
+                         : "border-slate-800"
+                     }
+                     ${
+                       isFindWitnessPhase && isSuggested && isMurderer
+                         ? "ring-4 ring-yellow-500 scale-105"
+                         : ""
+                     }
+                     ${
+                       isAccusedByMe
+                         ? "border-yellow-500/50 ring-1 ring-yellow-500/30"
+                         : ""
+                     }
+                   `}
                 >
+                  {/* Header */}
                   <div className="p-2 bg-slate-800/80 flex justify-between items-center border-b border-slate-700">
                     <div className="flex items-center gap-2">
                       <div
@@ -2330,81 +2488,184 @@ export default function InvestigationGame() {
                       </div>
                     )}
                   </div>
+
+                  {/* Cards */}
                   <div className="p-2 grid grid-cols-2 gap-2">
+                    {/* Means */}
                     <div className="space-y-1">
                       <div className="text-[10px] uppercase font-bold text-red-900 mb-1">
                         Murder Weapon
                       </div>
-                      {p.means.map((m) => (
-                        <div
-                          key={m}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (p.id !== user.uid)
+                      {p.means.map((m) => {
+                        const isSelected = isTarget && solveTarget.means === m;
+                        const isSubmitted =
+                          isAccusedByMe && myAccusation.means === m;
+                        const isSolution =
+                          (isScientist || isAccomplice || isMurderer) &&
+                          gameState.solution?.means === m &&
+                          gameState.solution?.murdererId === p.id;
+
+                        return (
+                          <div
+                            key={m}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (p.id === user.uid) return;
                               toggleSelection(p.id, "means", m);
-                          }}
-                          className={`p-1.5 rounded-md border flex flex-col items-center justify-center text-center cursor-pointer transition-all active:scale-95 touch-manipulation min-h-[60px] shadow-sm ${
-                            isTarget && solveTarget.means === m
-                              ? "bg-red-600 text-white font-bold shadow-md scale-105 border border-white"
-                              : isAccusedByMe && myAccusation.means === m
-                              ? "bg-red-900/40 text-red-200 border border-yellow-500/50 shadow-inner"
-                              : (isScientist ||
-                                  me.role === "ACCOMPLICE" ||
-                                  me.role === "MURDERER") &&
-                                gameState.solution?.means === m &&
-                                gameState.solution?.murdererId === p.id
-                              ? "bg-purple-900/80 text-white border-2 border-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.5)] animate-pulse"
-                              : "bg-slate-800 text-red-200 border border-red-900/30 hover:bg-red-900/20 hover:border-red-500"
-                          } ${
-                            p.id === user.uid && "opacity-50 cursor-not-allowed"
-                          }`}
-                        >
-                          {getCardIcon(m)}
-                          <span className="text-[10px] font-bold leading-tight line-clamp-2 w-full">
-                            {m}
-                          </span>
-                        </div>
-                      ))}
+                            }}
+                            className={`p-1.5 rounded-md border flex flex-col items-center justify-center text-center cursor-pointer transition-all active:scale-95 touch-manipulation min-h-[60px] shadow-sm ${
+                              isSelected
+                                ? "bg-red-600 text-white font-bold shadow-md scale-105 border border-white"
+                                : isSubmitted
+                                ? "bg-red-900/40 text-red-200 border border-yellow-500/50 shadow-inner"
+                                : isSolution
+                                ? "bg-purple-900/80 text-white border-2 border-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.5)] animate-pulse"
+                                : "bg-slate-800 text-red-200 border border-red-900/30 hover:bg-red-900/20 hover:border-red-500"
+                            } ${
+                              p.id === user.uid &&
+                              "opacity-50 cursor-not-allowed hover:bg-slate-800 hover:border-red-900/30"
+                            }`}
+                          >
+                            {getCardIcon(m)}
+                            <span className="text-[10px] font-bold leading-tight line-clamp-2 w-full">
+                              {m}
+                            </span>
+                          </div>
+                        );
+                      })}
                     </div>
+                    {/* Clues */}
                     <div className="space-y-1">
                       <div className="text-[10px] uppercase font-bold text-blue-900 mb-1">
                         Evidence on Site
                       </div>
-                      {p.clues.map((c) => (
-                        <div
-                          key={c}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (p.id !== user.uid)
+                      {p.clues.map((c) => {
+                        const isSelected = isTarget && solveTarget.clue === c;
+                        const isSubmitted =
+                          isAccusedByMe && myAccusation.clue === c;
+                        const isSolution =
+                          (isScientist || isAccomplice || isMurderer) &&
+                          gameState.solution?.clue === c &&
+                          gameState.solution?.murdererId === p.id;
+
+                        return (
+                          <div
+                            key={c}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (p.id === user.uid) return;
                               toggleSelection(p.id, "clue", c);
-                          }}
-                          className={`p-1.5 rounded-md border flex flex-col items-center justify-center text-center cursor-pointer transition-all active:scale-95 touch-manipulation min-h-[60px] shadow-sm ${
-                            isTarget && solveTarget.clue === c
-                              ? "bg-blue-600 text-white font-bold shadow-md scale-105 border border-white"
-                              : isAccusedByMe && myAccusation.clue === c
-                              ? "bg-blue-900/40 text-blue-200 border border-yellow-500/50 shadow-inner"
-                              : (isScientist ||
-                                  me.role === "ACCOMPLICE" ||
-                                  me.role === "MURDERER") &&
-                                gameState.solution?.clue === c &&
-                                gameState.solution?.murdererId === p.id
-                              ? "bg-purple-900/80 text-white border-2 border-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.5)] animate-pulse"
-                              : "bg-slate-800 text-blue-200 border border-blue-900/30 hover:bg-blue-900/20 hover:border-blue-500"
-                          } ${
-                            p.id === user.uid && "opacity-50 cursor-not-allowed"
-                          }`}
-                        >
-                          {getCardIcon(c)}
-                          <span className="text-[10px] font-bold leading-tight line-clamp-2 w-full">
-                            {c}
-                          </span>
-                        </div>
-                      ))}
+                            }}
+                            className={`p-1.5 rounded-md border flex flex-col items-center justify-center text-center cursor-pointer transition-all active:scale-95 touch-manipulation min-h-[60px] shadow-sm ${
+                              isSelected
+                                ? "bg-blue-600 text-white font-bold shadow-md scale-105 border border-white"
+                                : isSubmitted
+                                ? "bg-blue-900/40 text-blue-200 border border-yellow-500/50 shadow-inner"
+                                : isSolution
+                                ? "bg-purple-900/80 text-white border-2 border-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.5)] animate-pulse"
+                                : "bg-slate-800 text-blue-200 border border-blue-900/30 hover:bg-blue-900/20 hover:border-blue-500"
+                            } ${
+                              p.id === user.uid &&
+                              "opacity-50 cursor-not-allowed hover:bg-slate-800 hover:border-blue-900/30"
+                            }`}
+                          >
+                            {getCardIcon(c)}
+                            <span className="text-[10px] font-bold leading-tight line-clamp-2 w-full">
+                              {c}
+                            </span>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
+
+                  {/* Suggestion Marker */}
+                  {isFindWitnessPhase &&
+                    isSuggested &&
+                    (isAccomplice || isMurderer) && (
+                      <div className="absolute inset-0 bg-yellow-500/30 pointer-events-none flex items-center justify-center z-20">
+                        <div
+                          className={`bg-yellow-500 text-black px-3 py-1.5 rounded-lg font-black text-xs shadow-xl border-2 border-black transform -rotate-6 ${
+                            isMurderer ? "animate-pulse scale-110" : ""
+                          }`}
+                        >
+                          {isAccomplice ? "YOU SUGGESTED" : "ACCOMPLICE'S PICK"}
+                        </div>
+                      </div>
+                    )}
+
+                  {/* Show Submitted Accusation Details */}
+                  {pAccusation && (
+                    <div
+                      className={`mx-2 mb-2 border-2 rounded-lg p-2 text-center relative overflow-hidden ${
+                        (isFindWitnessPhase || isGameOverGood) &&
+                        pAccusation.isCorrect
+                          ? "border-green-500 bg-green-950/40"
+                          : "border-red-500 bg-red-950/40"
+                      }`}
+                    >
+                      <div
+                        className={`absolute top-0 left-0 w-full h-1 ${
+                          (isFindWitnessPhase || isGameOverGood) &&
+                          pAccusation.isCorrect
+                            ? "bg-green-500"
+                            : "bg-red-500"
+                        }`}
+                      ></div>
+                      <div
+                        className={`text-[10px] font-black uppercase tracking-widest mb-1 ${
+                          (isFindWitnessPhase || isGameOverGood) &&
+                          pAccusation.isCorrect
+                            ? "text-green-400"
+                            : "text-red-400"
+                        }`}
+                      >
+                        {(isFindWitnessPhase || isGameOverGood) &&
+                        pAccusation.isCorrect
+                          ? "SUCCESSFUL ATTEMPT"
+                          : "FAILED ATTEMPT"}
+                      </div>
+                      <div className="text-xs text-slate-200 mb-1">
+                        Suspected:{" "}
+                        <span className="font-bold text-white text-sm">
+                          {
+                            gameState.players.find(
+                              (t) => t.id === pAccusation.targetId
+                            )?.name
+                          }
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-1">
+                        <div
+                          className={`border rounded px-1 py-0.5 text-[10px] truncate flex items-center justify-center gap-1 ${
+                            (isFindWitnessPhase || isGameOverGood) &&
+                            pAccusation.isCorrect
+                              ? "bg-black/40 border-green-500/20 text-green-200"
+                              : "bg-black/40 border-red-500/20 text-red-200"
+                          }`}
+                        >
+                          {getCardIcon(pAccusation.means)}
+                          {pAccusation.means}
+                        </div>
+                        <div
+                          className={`border rounded px-1 py-0.5 text-[10px] truncate flex items-center justify-center gap-1 ${
+                            (isFindWitnessPhase || isGameOverGood) &&
+                            pAccusation.isCorrect
+                              ? "bg-black/40 border-green-500/20 text-green-200"
+                              : "bg-black/40 border-blue-500/20 text-blue-200"
+                          }`}
+                        >
+                          {getCardIcon(pAccusation.clue)}
+                          {pAccusation.clue}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* WITNESS SELECT BUTTONS */}
                   {showWitnessButtons && (
                     <div className="p-2 pt-0 mt-auto sticky bottom-0 bg-slate-900/95 backdrop-blur-sm border-t border-slate-700 -mx-px -mb-px rounded-b-xl z-30">
-                      {me.role === "ACCOMPLICE" && (
+                      {isAccomplice && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -2415,18 +2676,22 @@ export default function InvestigationGame() {
                           <Target size={14} /> Suggest as Witness
                         </button>
                       )}
-                      {me.role === "MURDERER" && (
+                      {isMurderer && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (
-                              gameState.settings?.useAccomplice &&
-                              !gameState.accompliceSuggestion
-                            )
-                              return handleAlert(
+                            const hasAccomplice =
+                              gameState.settings?.useAccomplice;
+                            const hasSuggestion =
+                              gameState.accompliceSuggestion;
+
+                            if (hasAccomplice && !hasSuggestion) {
+                              handleAlert(
                                 "Wait!",
                                 "Wait for your Accomplice to suggest a target first!"
                               );
+                              return;
+                            }
                             handleConfirm(
                               "Eliminate Witness?",
                               `Eliminate ${p.name} as the Witness? This ends the game.`,
@@ -2440,9 +2705,11 @@ export default function InvestigationGame() {
                       )}
                     </div>
                   )}
+
+                  {/* "Review Accusation" Button Container */}
                   {isTarget &&
                     (solveTarget.means || solveTarget.clue) &&
-                    gameState.phase !== "WITNESS_HUNT" && (
+                    !isFindWitnessPhase && (
                       <div className="p-2 pt-0 mt-auto sticky bottom-0 bg-slate-900/95 backdrop-blur-sm border-t border-slate-700 -mx-px -mb-px rounded-b-xl z-10">
                         <button
                           onClick={(e) => {
@@ -2461,7 +2728,7 @@ export default function InvestigationGame() {
           </div>
         </div>
 
-        {/* MODALS & OVERLAYS */}
+        {/* Log History Modal */}
         {showLogs && (
           <div className="fixed inset-0 bg-black/80 z-50 flex justify-end">
             <div className="w-full max-w-md bg-slate-900 h-full border-l border-slate-700 flex flex-col shadow-2xl animate-in slide-in-from-right">
@@ -2487,6 +2754,9 @@ export default function InvestigationGame() {
                         : "bg-slate-800 border-blue-500 text-slate-300"
                     }`}
                   >
+                    <div className="font-mono text-[10px] opacity-50 mb-1">
+                      EVENT {gameState.logs.length - i}
+                    </div>
                     {log.text}
                   </div>
                 ))}
@@ -2495,28 +2765,39 @@ export default function InvestigationGame() {
           </div>
         )}
 
+        {/* Leave Confirmation Modal (Updated for Host in Game View) */}
         {showLeaveConfirm && (
           <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
             <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 max-w-sm w-full text-center shadow-2xl">
               <h3 className="text-xl font-bold text-white mb-2">Leave Game?</h3>
               <p className="text-slate-400 mb-6 text-sm">
-                {isHost
-                  ? "As Host, you can terminate the session here."
-                  : "Are you sure? You will be removed."}
+                {gameState.hostId === user.uid
+                  ? "As Host, you can return everyone to the lobby or leave the room entirely."
+                  : "Are you sure? You will be removed from the room."}
               </p>
-              {isHost ? (
+
+              {gameState.hostId === user.uid ? (
                 <div className="grid grid-cols-1 gap-3">
                   <button
                     onClick={() => setShowLeaveConfirm(false)}
                     className="bg-slate-700 hover:bg-slate-600 text-white py-3 rounded font-bold"
                   >
-                    Stay
+                    Stay (Resume)
+                  </button>
+                  <button
+                    onClick={() => {
+                      restartGame();
+                      setShowLeaveConfirm(false);
+                    }}
+                    className="bg-blue-600 hover:bg-blue-500 text-white py-3 rounded font-bold"
+                  >
+                    Return to Lobby
                   </button>
                   <button
                     onClick={leaveRoom}
                     className="bg-red-600 hover:bg-red-500 text-white py-3 rounded font-bold"
                   >
-                    Terminate Session
+                    Leave Room
                   </button>
                 </div>
               ) : (
@@ -2539,6 +2820,7 @@ export default function InvestigationGame() {
           </div>
         )}
 
+        {/* Alert/Confirm Modal */}
         {uiAlert && (
           <div className="fixed inset-0 bg-black/90 z-[70] flex items-center justify-center p-4">
             <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 max-w-sm w-full text-center shadow-2xl animate-in zoom-in-95 duration-200">
@@ -2584,6 +2866,39 @@ export default function InvestigationGame() {
           </div>
         )}
 
+        {/* Persistent Floating Accomplice Suggestion */}
+        {isFindWitnessPhase &&
+          !witnessHuntModalOpen &&
+          isMurderer &&
+          gameState.accompliceSuggestion &&
+          showSuggestionToast && (
+            <div
+              className="fixed inset-0 z-40 flex items-start justify-center pt-20"
+              onClick={() => setShowSuggestionToast(false)}
+            >
+              <div
+                onClick={(e) => e.stopPropagation()}
+                className="bg-green-900/90 border-2 border-green-500 p-4 rounded-xl shadow-2xl animate-bounce cursor-default max-w-xs text-center backdrop-blur-sm"
+              >
+                <div className="font-bold text-green-400 text-sm mb-1 uppercase">
+                  <Target size={14} className="inline mr-1" /> Target Confirmed
+                </div>
+                Accomplice suggests:{" "}
+                <span className="text-white font-black text-lg block mt-1">
+                  {
+                    gameState.players.find(
+                      (p) => p.id === gameState.accompliceSuggestion
+                    )?.name
+                  }
+                </span>
+                <div className="text-[10px] text-green-300 mt-2 uppercase tracking-wide">
+                  Click empty space to dismiss
+                </div>
+              </div>
+            </div>
+          )}
+
+        {/* MODAL: SOLVE ATTEMPT */}
         {showSolveModal && solveTarget && (
           <div className="fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4">
             <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
@@ -2615,7 +2930,7 @@ export default function InvestigationGame() {
                       </div>
                     ) : (
                       <div className="p-3 bg-slate-800 border border-slate-700 border-dashed rounded text-slate-500 text-center text-xs">
-                        Select Weapon
+                        Select Murder Weapon from Card
                       </div>
                     )}
                   </div>
@@ -2630,10 +2945,17 @@ export default function InvestigationGame() {
                       </div>
                     ) : (
                       <div className="p-3 bg-slate-800 border border-slate-700 border-dashed rounded text-slate-500 text-center text-xs">
-                        Select Evidence
+                        Select Evidence on Site from Card
                       </div>
                     )}
                   </div>
+                </div>
+                <div className="bg-blue-900/20 p-3 rounded text-sm text-blue-200 text-center border border-blue-800">
+                  <div className="font-bold mb-1">PROCEDURE NOTE</div>
+                  Your result will be revealed only after <strong>
+                    ALL
+                  </strong>{" "}
+                  investigators have submitted their files.
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -2655,6 +2977,7 @@ export default function InvestigationGame() {
           </div>
         )}
 
+        {/* MODAL: ACCUSATION FEEDBACK */}
         {gameState.activeAccusation && (
           <div className="fixed inset-0 bg-black/95 z-[100] flex items-center justify-center p-4">
             <div
@@ -2670,6 +2993,10 @@ export default function InvestigationGame() {
                   : "WRONG ACCUSATION"}
               </h2>
               <div className="bg-black/30 p-4 rounded-xl mb-6 text-left">
+                <div className="text-xs uppercase font-bold text-white/50 mb-2 border-b border-white/10 pb-1">
+                  The Accusation Attempt
+                </div>
+
                 <div className="grid grid-cols-[80px_1fr] gap-2 items-center mb-1">
                   <span className="text-sm text-gray-400 font-bold">
                     Accuser:
@@ -2678,6 +3005,7 @@ export default function InvestigationGame() {
                     {gameState.activeAccusation.solverName}
                   </span>
                 </div>
+
                 <div className="grid grid-cols-[80px_1fr] gap-2 items-center mb-4">
                   <span className="text-sm text-gray-400 font-bold">
                     Suspect:
@@ -2690,10 +3018,11 @@ export default function InvestigationGame() {
                     }
                   </span>
                 </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-red-900/30 border border-red-500/30 p-2 rounded text-center">
                     <div className="text-[10px] text-red-300 uppercase font-bold mb-1">
-                      Weapon
+                      Murder Weapon
                     </div>
                     <div className="text-white font-bold text-sm flex items-center justify-center gap-1">
                       {getCardIcon(gameState.activeAccusation.means)}
@@ -2702,7 +3031,7 @@ export default function InvestigationGame() {
                   </div>
                   <div className="bg-blue-900/30 border border-blue-500/30 p-2 rounded text-center">
                     <div className="text-[10px] text-blue-300 uppercase font-bold mb-1">
-                      Evidence
+                      Evidence on Site
                     </div>
                     <div className="text-white font-bold text-sm flex items-center justify-center gap-1">
                       {getCardIcon(gameState.activeAccusation.clue)}
@@ -2711,6 +3040,7 @@ export default function InvestigationGame() {
                   </div>
                 </div>
               </div>
+
               <div className="flex flex-col items-center gap-3">
                 <div className="text-xs uppercase font-bold text-white/50">
                   Waiting for players:{" "}
@@ -2738,19 +3068,21 @@ export default function InvestigationGame() {
           </div>
         )}
 
-        {gameState.phase === "WITNESS_HUNT" && witnessHuntModalOpen && (
+        {/* WITNESS HUNT OVERLAY */}
+        {isFindWitnessPhase && witnessHuntModalOpen && (
           <div className="fixed inset-0 z-50 flex flex-col items-center justify-center p-4 bg-black/80">
-            {me.role === "MURDERER" || me.role === "ACCOMPLICE" ? (
+            {isMurderer || isAccomplice ? (
               <div className="bg-red-950 border-2 border-red-500 p-6 rounded-xl shadow-2xl text-center max-w-lg animate-in fade-in zoom-in duration-300">
                 <h2 className="text-2xl md:text-3xl font-black text-red-500 mb-2">
                   YOU HAVE BEEN CAUGHT!
                 </h2>
                 <p className="text-red-100 text-base md:text-lg mb-4">
-                  {me.role === "ACCOMPLICE"
+                  {isAccomplice
                     ? "Help the Murderer find the Witness."
                     : "Identify the Witness to steal the win."}
                 </p>
-                {me.role === "MURDERER" &&
+
+                {isMurderer &&
                   gameState.settings?.useAccomplice &&
                   (!gameState.accompliceSuggestion ? (
                     <div className="bg-black/40 p-3 rounded border border-red-500/50 mb-4 animate-pulse">
@@ -2776,6 +3108,7 @@ export default function InvestigationGame() {
                       </span>
                     </div>
                   ))}
+
                 <button
                   onClick={() => setWitnessHuntModalOpen(false)}
                   className="mt-4 bg-white text-red-900 px-8 py-3 rounded-full font-black uppercase text-sm hover:scale-105 transition-transform shadow-xl"
@@ -2794,8 +3127,258 @@ export default function InvestigationGame() {
                 <div className="text-xl font-bold text-red-400 mb-4 animate-pulse">
                   THE MURDERER IS HUNTING FOR THE WITNESS
                 </div>
+                <p className="text-slate-400 text-sm">
+                  If the Murderer identifies the Witness correctly, the Bad Guys
+                  steal the win.
+                </p>
               </div>
             )}
+          </div>
+        )}
+
+        {/* GAME OVER SCREENS */}
+        {gameState.phase === "GAME_OVER_GOOD" && (
+          <div className="fixed inset-0 bg-blue-900/95 z-50 flex flex-col items-center justify-center p-6 text-center">
+            <Badge size={96} className="text-yellow-400 mb-6 shadow-xl" />
+            <h1 className="text-4xl md:text-6xl font-black text-white mb-4">
+              INVESTIGATORS WIN
+            </h1>
+            <p className="text-blue-200 text-lg md:text-xl max-w-lg mb-8">
+              Solved by:{" "}
+              <span className="text-yellow-400 font-bold">
+                {(gameState.successfulSolvers || [])
+                  .map((id) => gameState.players.find((p) => p.id === id)?.name)
+                  .join(", ") || "The Team"}
+              </span>
+            </p>
+
+            <div className="bg-white/10 p-6 rounded-xl border border-white/20 mb-8 w-full max-w-md backdrop-blur-md">
+              <div className="text-sm uppercase tracking-widest text-blue-300 mb-6 font-bold">
+                The Solution
+              </div>
+
+              <div className="flex justify-center gap-4 mb-6">
+                {/* Means Card */}
+                <div className="bg-slate-900/80 border-2 border-red-500/50 p-4 rounded-xl flex flex-col items-center justify-center w-32 h-36 shadow-2xl transform hover:scale-105 transition-transform">
+                  <div className="text-red-400 text-[10px] font-black uppercase tracking-widest mb-2">
+                    Weapon
+                  </div>
+                  <div className="scale-150 mb-2">
+                    {getCardIcon(gameState.solution.means)}
+                  </div>
+                  <div className="text-sm font-bold text-white leading-tight">
+                    {gameState.solution.means}
+                  </div>
+                </div>
+
+                {/* Plus Sign */}
+                <div className="flex items-center text-white/50">
+                  <span className="text-2xl font-black">+</span>
+                </div>
+
+                {/* Clue Card */}
+                <div className="bg-slate-900/80 border-2 border-blue-500/50 p-4 rounded-xl flex flex-col items-center justify-center w-32 h-36 shadow-2xl transform hover:scale-105 transition-transform">
+                  <div className="text-blue-400 text-[10px] font-black uppercase tracking-widest mb-2">
+                    Evidence
+                  </div>
+                  <div className="scale-150 mb-2">
+                    {getCardIcon(gameState.solution.clue)}
+                  </div>
+                  <div className="text-sm font-bold text-white leading-tight">
+                    {gameState.solution.clue}
+                  </div>
+                </div>
+              </div>
+
+              <div className="text-lg text-blue-200 bg-black/20 p-2 rounded-lg inline-block px-6">
+                Culprit:{" "}
+                <span className="text-white font-black">
+                  {
+                    gameState.players.find(
+                      (p) => p.id === gameState.solution.murdererId
+                    )?.name
+                  }
+                </span>
+              </div>
+            </div>
+
+            {/* --- REPLAY UI --- */}
+            <div className="flex flex-col items-center gap-3 w-full max-w-md">
+              {/* Host Controls */}
+              {gameState.hostId === user.uid ? (
+                <div className="w-full bg-slate-800/80 p-4 rounded-xl border border-slate-700 backdrop-blur-sm">
+                  <div className="text-slate-400 text-xs uppercase font-bold mb-2">
+                    Players Ready: {gameState.replayRequests?.length || 0} /{" "}
+                    {gameState.players.length}
+                  </div>
+                  {/* Progress Bar */}
+                  <div className="w-full bg-slate-900 h-2 rounded-full mb-4 overflow-hidden">
+                    <div
+                      className="bg-green-500 h-full transition-all duration-500"
+                      style={{
+                        width: `${
+                          ((gameState.replayRequests?.length || 0) /
+                            gameState.players.length) *
+                          100
+                        }%`,
+                      }}
+                    />
+                  </div>
+
+                  <button
+                    onClick={restartGame}
+                    className="w-full bg-white text-slate-900 py-3 rounded-lg font-bold hover:scale-105 transition-transform flex items-center justify-center gap-2 shadow-xl"
+                  >
+                    <RotateCcw size={20} /> Return Everyone to Lobby
+                  </button>
+                </div>
+              ) : (
+                /* Guest Controls */
+                <button
+                  onClick={signalReplayReady}
+                  disabled={gameState.replayRequests?.includes(user.uid)}
+                  className={`w-full py-3 rounded-full font-bold transition-all flex items-center justify-center gap-2 shadow-xl ${
+                    gameState.replayRequests?.includes(user.uid)
+                      ? "bg-green-600 text-white cursor-default"
+                      : "bg-white text-slate-900 hover:scale-105"
+                  }`}
+                >
+                  {gameState.replayRequests?.includes(user.uid) ? (
+                    <>
+                      <CheckCircle size={20} /> Waiting for Host...
+                    </>
+                  ) : (
+                    <>
+                      <RotateCcw size={20} /> Ready for another game
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+
+            <div className="bg-gray-950 pb-1 pt-1 z-50 w-full mt-auto fixed bottom-0 left-0 right-0">
+              <InvestigationLogo />
+            </div>
+          </div>
+        )}
+
+        {gameState.phase === "GAME_OVER_BAD" && (
+          <div className="fixed inset-0 bg-red-950/95 z-50 flex flex-col items-center justify-center p-6 text-center">
+            <Skull size={96} className="text-red-500 mb-6 shadow-xl" />
+            <h1 className="text-4xl md:text-6xl font-black text-white mb-4">
+              MURDERER WINS
+            </h1>
+            <p className="text-red-200 text-lg md:text-xl max-w-lg mb-8">
+              The investigation failed or the witness was silenced.
+            </p>
+
+            <div className="bg-white/10 p-6 rounded-xl border border-white/20 mb-8 w-full max-w-md backdrop-blur-md">
+              <div className="text-sm uppercase tracking-widest text-red-300 mb-6 font-bold">
+                The Solution
+              </div>
+
+              <div className="flex justify-center gap-4 mb-6">
+                {/* Means Card */}
+                <div className="bg-slate-900/80 border-2 border-red-500/50 p-4 rounded-xl flex flex-col items-center justify-center w-32 h-36 shadow-2xl transform hover:scale-105 transition-transform">
+                  <div className="text-red-400 text-[10px] font-black uppercase tracking-widest mb-2">
+                    Weapon
+                  </div>
+                  <div className="scale-150 mb-2">
+                    {getCardIcon(gameState.solution.means)}
+                  </div>
+                  <div className="text-sm font-bold text-white leading-tight">
+                    {gameState.solution.means}
+                  </div>
+                </div>
+
+                {/* Plus Sign */}
+                <div className="flex items-center text-white/50">
+                  <span className="text-2xl font-black">+</span>
+                </div>
+
+                {/* Clue Card */}
+                <div className="bg-slate-900/80 border-2 border-blue-500/50 p-4 rounded-xl flex flex-col items-center justify-center w-32 h-36 shadow-2xl transform hover:scale-105 transition-transform">
+                  <div className="text-blue-400 text-[10px] font-black uppercase tracking-widest mb-2">
+                    Evidence
+                  </div>
+                  <div className="scale-150 mb-2">
+                    {getCardIcon(gameState.solution.clue)}
+                  </div>
+                  <div className="text-sm font-bold text-white leading-tight">
+                    {gameState.solution.clue}
+                  </div>
+                </div>
+              </div>
+
+              <div className="text-lg text-red-200 bg-black/20 p-2 rounded-lg inline-block px-6">
+                Culprit:{" "}
+                <span className="text-white font-black">
+                  {
+                    gameState.players.find(
+                      (p) => p.id === gameState.solution.murdererId
+                    )?.name
+                  }
+                </span>
+              </div>
+            </div>
+
+            {/* --- REPLAY UI --- */}
+            <div className="flex flex-col items-center gap-3 w-full max-w-md">
+              {/* Host Controls */}
+              {gameState.hostId === user.uid ? (
+                <div className="w-full bg-slate-800/80 p-4 rounded-xl border border-slate-700 backdrop-blur-sm">
+                  <div className="text-slate-400 text-xs uppercase font-bold mb-2">
+                    Players Ready: {gameState.replayRequests?.length || 0} /{" "}
+                    {gameState.players.length}
+                  </div>
+                  {/* Progress Bar */}
+                  <div className="w-full bg-slate-900 h-2 rounded-full mb-4 overflow-hidden">
+                    <div
+                      className="bg-green-500 h-full transition-all duration-500"
+                      style={{
+                        width: `${
+                          ((gameState.replayRequests?.length || 0) /
+                            gameState.players.length) *
+                          100
+                        }%`,
+                      }}
+                    />
+                  </div>
+
+                  <button
+                    onClick={restartGame}
+                    className="w-full bg-white text-slate-900 py-3 rounded-lg font-bold hover:scale-105 transition-transform flex items-center justify-center gap-2 shadow-xl"
+                  >
+                    <RotateCcw size={20} /> Return Everyone to Lobby
+                  </button>
+                </div>
+              ) : (
+                /* Guest Controls */
+                <button
+                  onClick={signalReplayReady}
+                  disabled={gameState.replayRequests?.includes(user.uid)}
+                  className={`w-full py-3 rounded-full font-bold transition-all flex items-center justify-center gap-2 shadow-xl ${
+                    gameState.replayRequests?.includes(user.uid)
+                      ? "bg-green-600 text-white cursor-default"
+                      : "bg-white text-slate-900 hover:scale-105"
+                  }`}
+                >
+                  {gameState.replayRequests?.includes(user.uid) ? (
+                    <>
+                      <CheckCircle size={20} /> Waiting for Host...
+                    </>
+                  ) : (
+                    <>
+                      <RotateCcw size={20} /> Ready for another game
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+
+            <div className="bg-gray-950 pb-1 pt-1 z-50 w-full mt-auto fixed bottom-0 left-0 right-0">
+              <InvestigationLogo />
+            </div>
           </div>
         )}
         <div className="fixed bottom-0 left-0 w-full z-50">

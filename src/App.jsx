@@ -42,6 +42,7 @@ import {
   BookOpen,
   Hammer,
   Sparkles,
+  HatGlasses,
 } from "lucide-react";
 
 // --- Firebase Init ---
@@ -662,7 +663,7 @@ const FloatingBackground = () => (
 // 2. Footer Component
 const InvestigationLogo = () => (
   <div className="flex items-center justify-center gap-1 opacity-40 py-2 w-full bg-slate-950/80 backdrop-blur-sm border-t border-slate-900/50 z-50">
-    <Search size={12} className="text-green-500" />
+    <HatGlasses size={12} className="text-green-500" />
     <span className="text-[10px] font-black tracking-widest text-green-500 uppercase">
       INVESTIGATION
     </span>
@@ -1345,6 +1346,7 @@ export default function InvestigationGame() {
         accusations: [],
         nextRoundRequests: [],
         readyPlayers: [],
+        replayRequests: [], // ADDED: Clear replay requests on new game start
         activeAccusation: null,
       }
     );
@@ -1648,7 +1650,7 @@ export default function InvestigationGame() {
         )}
 
         <div className="z-10 text-center mb-10 animate-in fade-in zoom-in duration-700">
-          <Search
+          <HatGlasses
             size={64}
             className="text-green-500 mx-auto mb-4 animate-bounce drop-shadow-[0_0_15px_rgba(34,197,94,0.5)]"
           />
@@ -3207,30 +3209,74 @@ export default function InvestigationGame() {
               {/* Host Controls */}
               {gameState.hostId === user.uid ? (
                 <div className="w-full bg-slate-800/80 p-4 rounded-xl border border-slate-700 backdrop-blur-sm">
-                  <div className="text-slate-400 text-xs uppercase font-bold mb-2">
-                    Players Ready: {gameState.replayRequests?.length || 0} /{" "}
-                    {gameState.players.length}
+                  <div className="text-slate-400 text-xs uppercase font-bold mb-2 flex justify-between">
+                    <span>Players Ready:</span>
+                    <span
+                      className={
+                        gameState.replayRequests?.length >=
+                        gameState.players.length - 1
+                          ? "text-green-400"
+                          : "text-orange-400"
+                      }
+                    >
+                      {gameState.replayRequests?.length || 0} /{" "}
+                      {gameState.players.length - 1}
+                    </span>
                   </div>
                   {/* Progress Bar */}
                   <div className="w-full bg-slate-900 h-2 rounded-full mb-4 overflow-hidden">
                     <div
                       className="bg-green-500 h-full transition-all duration-500"
                       style={{
-                        width: `${
+                        width: `${Math.min(
+                          100,
                           ((gameState.replayRequests?.length || 0) /
-                            gameState.players.length) *
-                          100
-                        }%`,
+                            (gameState.players.length - 1)) *
+                            100
+                        )}%`,
                       }}
                     />
                   </div>
 
-                  <button
-                    onClick={restartGame}
-                    className="w-full bg-white text-slate-900 py-3 rounded-lg font-bold hover:scale-105 transition-transform flex items-center justify-center gap-2 shadow-xl"
-                  >
-                    <RotateCcw size={20} /> Return Everyone to Lobby
-                  </button>
+                  <div className="space-y-2">
+                    <button
+                      onClick={startGame}
+                      disabled={
+                        (gameState.replayRequests?.length || 0) <
+                        gameState.players.length - 1
+                      }
+                      className={`w-full py-3 rounded-lg font-bold transition-all flex items-center justify-center gap-2 shadow-xl ${
+                        (gameState.replayRequests?.length || 0) <
+                        gameState.players.length - 1
+                          ? "bg-slate-700 text-slate-500 cursor-not-allowed opacity-50"
+                          : "bg-green-600 text-white hover:scale-105 hover:bg-green-500"
+                      }`}
+                    >
+                      <RotateCcw size={20} /> Start New Game
+                    </button>
+
+                    <button
+                      onClick={restartGame}
+                      disabled={
+                        (gameState.replayRequests?.length || 0) <
+                        gameState.players.length - 1
+                      }
+                      className={`w-full py-3 rounded-lg font-bold transition-all flex items-center justify-center gap-2 shadow-xl ${
+                        (gameState.replayRequests?.length || 0) <
+                        gameState.players.length - 1
+                          ? "bg-slate-700 text-slate-500 cursor-not-allowed opacity-50"
+                          : "bg-white text-slate-900 hover:scale-105"
+                      }`}
+                    >
+                      <LogOut size={20} /> Return to Lobby
+                    </button>
+                  </div>
+                  {(gameState.replayRequests?.length || 0) <
+                    gameState.players.length - 1 && (
+                    <div className="text-center text-[10px] text-slate-500 mt-2 animate-pulse">
+                      Waiting for all investigators...
+                    </div>
+                  )}
                 </div>
               ) : (
                 /* Guest Controls */
@@ -3327,30 +3373,74 @@ export default function InvestigationGame() {
               {/* Host Controls */}
               {gameState.hostId === user.uid ? (
                 <div className="w-full bg-slate-800/80 p-4 rounded-xl border border-slate-700 backdrop-blur-sm">
-                  <div className="text-slate-400 text-xs uppercase font-bold mb-2">
-                    Players Ready: {gameState.replayRequests?.length || 0} /{" "}
-                    {gameState.players.length}
+                  <div className="text-slate-400 text-xs uppercase font-bold mb-2 flex justify-between">
+                    <span>Players Ready:</span>
+                    <span
+                      className={
+                        gameState.replayRequests?.length >=
+                        gameState.players.length - 1
+                          ? "text-green-400"
+                          : "text-orange-400"
+                      }
+                    >
+                      {gameState.replayRequests?.length || 0} /{" "}
+                      {gameState.players.length - 1}
+                    </span>
                   </div>
                   {/* Progress Bar */}
                   <div className="w-full bg-slate-900 h-2 rounded-full mb-4 overflow-hidden">
                     <div
                       className="bg-green-500 h-full transition-all duration-500"
                       style={{
-                        width: `${
+                        width: `${Math.min(
+                          100,
                           ((gameState.replayRequests?.length || 0) /
-                            gameState.players.length) *
-                          100
-                        }%`,
+                            (gameState.players.length - 1)) *
+                            100
+                        )}%`,
                       }}
                     />
                   </div>
 
-                  <button
-                    onClick={restartGame}
-                    className="w-full bg-white text-slate-900 py-3 rounded-lg font-bold hover:scale-105 transition-transform flex items-center justify-center gap-2 shadow-xl"
-                  >
-                    <RotateCcw size={20} /> Return Everyone to Lobby
-                  </button>
+                  <div className="space-y-2">
+                    <button
+                      onClick={startGame}
+                      disabled={
+                        (gameState.replayRequests?.length || 0) <
+                        gameState.players.length - 1
+                      }
+                      className={`w-full py-3 rounded-lg font-bold transition-all flex items-center justify-center gap-2 shadow-xl ${
+                        (gameState.replayRequests?.length || 0) <
+                        gameState.players.length - 1
+                          ? "bg-slate-700 text-slate-500 cursor-not-allowed opacity-50"
+                          : "bg-green-600 text-white hover:scale-105 hover:bg-green-500"
+                      }`}
+                    >
+                      <RotateCcw size={20} /> Start New Game
+                    </button>
+
+                    <button
+                      onClick={restartGame}
+                      disabled={
+                        (gameState.replayRequests?.length || 0) <
+                        gameState.players.length - 1
+                      }
+                      className={`w-full py-3 rounded-lg font-bold transition-all flex items-center justify-center gap-2 shadow-xl ${
+                        (gameState.replayRequests?.length || 0) <
+                        gameState.players.length - 1
+                          ? "bg-slate-700 text-slate-500 cursor-not-allowed opacity-50"
+                          : "bg-white text-slate-900 hover:scale-105"
+                      }`}
+                    >
+                      <LogOut size={20} /> Return to Lobby
+                    </button>
+                  </div>
+                  {(gameState.replayRequests?.length || 0) <
+                    gameState.players.length - 1 && (
+                    <div className="text-center text-[10px] text-slate-500 mt-2 animate-pulse">
+                      Waiting for all investigators...
+                    </div>
+                  )}
                 </div>
               ) : (
                 /* Guest Controls */

@@ -1707,7 +1707,6 @@ export default function InvestigationGame() {
 
         {/* Footer in Menu */}
         <div className="fixed bottom-0 left-0 w-full">
-          <InvestigationLogo />
         </div>
       </div>
     );

@@ -1709,7 +1709,7 @@ export default function InvestigationGame() {
         <div className="fixed bottom-0 left-0 w-full">
         </div>
         <div className="absolute bottom-4 text-slate-600 text-xs text-center">
-          Inspired by Sea, Salt & Paper. A tribute game.
+          Inspired by Deception: Murder in Hongkong. A tribute game.
           <br />
           Developed by <strong>RAWFID K SHUVO</strong>. Visit{" "}
           <a

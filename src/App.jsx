@@ -1708,6 +1708,20 @@ export default function InvestigationGame() {
         {/* Footer in Menu */}
         <div className="fixed bottom-0 left-0 w-full">
         </div>
+        <div className="absolute bottom-4 text-slate-600 text-xs text-center">
+          Inspired by Sea, Salt & Paper. A tribute game.
+          <br />
+          Developed by <strong>RAWFID K SHUVO</strong>. Visit{" "}
+          <a
+            href="https://your-link-here.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-500 underline hover:text-blue-600"
+          >
+            GAMEHUB
+          </a>{" "}
+          for more games.
+        </div>
       </div>
     );
   }

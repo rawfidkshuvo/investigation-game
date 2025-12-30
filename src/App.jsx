@@ -2841,8 +2841,12 @@ export default function InvestigationGame() {
           </div>
           <div className="flex gap-2">
             <button
-              onClick={() => setShowLogs(true)}
-              className="p-2 text-slate-400 hover:bg-slate-800 rounded-full"
+              onClick={() => setShowLogs(!showLogs)}
+              className={`p-2 rounded-full ${
+                showLogs
+                  ? "bg-green-900 text-green-400"
+                  : "text-gray-400 hover:bg-gray-800"
+              }`}
             >
               <History size={18} />
             </button>

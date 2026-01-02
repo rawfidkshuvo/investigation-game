@@ -2059,7 +2059,7 @@ export default function InvestigationGame() {
               </div>
             </div>
           )}
-          <div className="bg-slate-900 p-2 flex justify-between items-center border-b border-slate-800 shrink-0">
+          <div className="bg-slate-900 relative z-30 shadow-xl p-2 flex justify-between items-center border-b border-slate-800 shrink-0">
             <div className="text-center">
               <span className="text-[10px] text-slate-500 uppercase font-bold block">
                 Rnd

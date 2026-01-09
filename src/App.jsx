@@ -661,6 +661,15 @@ const InvestigationLogo = () => (
   </div>
 );
 
+const InvestigationLogoBig = () => (
+  <div className="flex items-center justify-center gap-1 opacity-40 py-2 w-full bg-slate-950/80 backdrop-blur-sm border-t border-slate-900/50 z-50">
+    <HatGlasses size={22} className="text-green-500" />
+    <span className="text-[20px] font-black tracking-widest text-green-500 uppercase">
+      INVESTIGATION
+    </span>
+  </div>
+);
+
 const TutorialModal = ({ onClose }) => (
   <div className="fixed inset-0 z-[170] bg-slate-950/95 flex justify-center overflow-y-auto p-4 animate-in slide-in-from-bottom-10 fade-in duration-300">
     <div className="w-full max-w-4xl relative">
@@ -673,7 +682,7 @@ const TutorialModal = ({ onClose }) => (
       <div className="space-y-8 pb-20 mt-12 md:mt-0">
         <div className="text-center space-y-2">
           <h2 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-green-600">
-            GAME GUIDE
+            PENAL CODES
           </h2>
           <p className="text-slate-400">Deduction, Deception, and Discovery</p>
         </div>
@@ -1566,6 +1575,7 @@ export default function InvestigationGame() {
     return (
       <div className="min-h-screen bg-gray-950 text-white flex flex-col items-center justify-center p-6 relative pb-16">
         <FloatingBackground />
+        <InvestigationLogoBig />
         {showTutorial && (
           <TutorialModal onClose={() => setShowTutorial(false)} />
         )}
@@ -2076,7 +2086,7 @@ export default function InvestigationGame() {
           <div className="bg-slate-900 relative z-30 shadow-xl p-2 flex justify-between items-center border-b border-slate-800 shrink-0">
             <div className="text-center">
               <span className="text-[10px] text-slate-500 uppercase font-bold block">
-                Rnd
+                Round
               </span>
               <span className="text-sm font-bold text-white">
                 {gameState.round}/3

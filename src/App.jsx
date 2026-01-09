@@ -1538,8 +1538,22 @@ export default function InvestigationGame() {
             onClick={() => setShowTutorial(true)}
             className="w-full text-sm text-gray-400 hover:text-white flex items-center justify-center gap-2 py-2"
           >
-            <BookOpen size={16} /> How to Play
+            <BookOpen size={16} /> Penal Codes
           </button>
+        </div>
+        <div className="absolute bottom-4 text-slate-600 text-xs text-center">
+          Inspired by Deception: Murder in Hongkong. A tribute game.
+          <br />
+          Developed by <strong>RAWFID K SHUVO</strong>. Visit{" "}
+          <a
+            href="https://rawfidkshuvo.github.io/gamehub/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-emerald-500 underline hover:text-emerald-600"
+          >
+            GAMEHUB
+          </a>{" "}
+          for more games.
         </div>
       </div>
     );

@@ -276,7 +276,7 @@ const CARD_ICONS = {
 
 const TILES_DATA = {
   FIXED: {
-    title: "Cause of Death",
+    title: "Cause of Death cdffcvv vbfgg vcfgvv",
     type: "purple",
     options: [
       "Suffocation",

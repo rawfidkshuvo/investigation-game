@@ -276,7 +276,7 @@ const CARD_ICONS = {
 
 const TILES_DATA = {
   FIXED: {
-    title: "Cause of Death cdffcvv vbfgg vcfgvv",
+    title: "Cause of Death",
     type: "purple",
     options: [
       "Suffocation",
@@ -567,7 +567,7 @@ const TILES_DATA = {
       ],
     },
     {
-      title: "Relation to Victim (Evidence)",
+      title: "Origin of Evidence",
       options: [
         "Owned by Victim",
         "Stolen from Victim",
@@ -589,7 +589,7 @@ const TILES_DATA = {
       ],
     },
     {
-      title: "Residue Left by Weapon",
+      title: "Weapon Residue",
       options: [
         "Blood",
         "Powder/Dust",
@@ -2049,10 +2049,7 @@ export default function InvestigationGame() {
                           : "bg-slate-700"
                       }`}
                     >
-                      {/* The animated text wrapper */}
-                      <div className="marquee-text">
-                        {tile.title}
-                      </div>
+                      {tile.title}
                     </div>
                     <div className="p-1.5 space-y-0.5">
                       {tile.options.map((opt, oIdx) => {

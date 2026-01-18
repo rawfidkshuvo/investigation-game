@@ -2049,7 +2049,10 @@ export default function InvestigationGame() {
                           : "bg-slate-700"
                       }`}
                     >
-                      {tile.title}
+                      {/* The animated text wrapper */}
+                      <div className="marquee-text">
+                        {tile.title}
+                      </div>
                     </div>
                     <div className="p-1.5 space-y-0.5">
                       {tile.options.map((opt, oIdx) => {

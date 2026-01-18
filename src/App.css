@@ -1,0 +1,12 @@
+/* In your index.css or App.css */
+@keyframes scroll-left {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+.marquee-text {
+  display: inline-block;
+  white-space: nowrap;
+  animation: scroll-left 8s linear infinite;
+  padding-left: 100%; /* Starts the text off-screen */
+}

@@ -901,7 +901,9 @@ const RoleCard = ({ role }) => {
 export default function InvestigationGame() {
   const [user, setUser] = useState(null);
   const [view, setView] = useState("menu");
-  const [playerName, setPlayerName] = useState("");
+  const [playerName, setPlayerName] = useState(
+    () => localStorage.getItem("investigation_playerName") || ""
+  );
   const [roomCodeInput, setRoomCodeInput] = useState("");
   const [roomId, setRoomId] = useState(null);
   const [gameState, setGameState] = useState(null);
@@ -931,6 +933,10 @@ export default function InvestigationGame() {
       setRoomCodeInput(savedRoomId);
     }
   }, []);
+
+  useEffect(() => {
+    if (playerName) localStorage.setItem("investigation_playerName", playerName);
+  }, [playerName]);
 
   useEffect(() => {
     const initAuth = async () => {

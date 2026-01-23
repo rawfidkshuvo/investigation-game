@@ -901,9 +901,7 @@ const RoleCard = ({ role }) => {
 export default function InvestigationGame() {
   const [user, setUser] = useState(null);
   const [view, setView] = useState("menu");
-  const [playerName, setPlayerName] = useState(
-    () => localStorage.getItem("investigation_playerName") || ""
-  );
+  
   const [roomCodeInput, setRoomCodeInput] = useState("");
   const [roomId, setRoomId] = useState(null);
   const [gameState, setGameState] = useState(null);
@@ -926,6 +924,15 @@ export default function InvestigationGame() {
   const [showSuggestionToast, setShowSuggestionToast] = useState(true);
   const [showTutorial, setShowTutorial] = useState(false);
 
+  //read and fill global name
+  const [playerName, setPlayerName] = useState(
+    () => localStorage.getItem("gameHub_playerName") || ""
+  );
+  //set global name for all game
+  useEffect(() => {
+    if (playerName) localStorage.setItem("gameHub_playerName", playerName);
+  }, [playerName]);
+
   useEffect(() => {
     const savedRoomId = localStorage.getItem("investigation_roomId");
     if (savedRoomId) {
@@ -934,9 +941,7 @@ export default function InvestigationGame() {
     }
   }, []);
 
-  useEffect(() => {
-    if (playerName) localStorage.setItem("investigation_playerName", playerName);
-  }, [playerName]);
+  
 
   useEffect(() => {
     const initAuth = async () => {

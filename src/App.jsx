@@ -641,7 +641,7 @@ const getCardIcon = (name) => {
 // --- Sub-Components ---
 const FloatingBackground = () => (
   <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-    <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-gray-800 via-gray-900 to-black opacity-80" />
+    <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,var(--tw-gradient-stops))] from-gray-800 via-gray-900 to-black opacity-80" />
     <div
       className="absolute inset-0 opacity-10"
       style={{
@@ -671,7 +671,7 @@ const InvestigationLogoBig = () => (
 );
 
 const TutorialModal = ({ onClose }) => (
-  <div className="fixed inset-0 z-[170] bg-slate-950/95 flex justify-center overflow-y-auto p-4 animate-in slide-in-from-bottom-10 fade-in duration-300">
+  <div className="fixed inset-0 z-170 bg-slate-950/95 flex justify-center overflow-y-auto p-4 animate-in slide-in-from-bottom-10 fade-in duration-300">
     <div className="w-full max-w-4xl relative">
       <button
         onClick={onClose}
@@ -681,7 +681,7 @@ const TutorialModal = ({ onClose }) => (
       </button>
       <div className="space-y-8 pb-20 mt-12 md:mt-0">
         <div className="text-center space-y-2">
-          <h2 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-green-600">
+          <h2 className="text-4xl font-black text-transparent bg-clip-text bg-linear-to-r from-blue-400 to-green-600">
             PENAL CODES
           </h2>
           <p className="text-slate-400">Deduction, Deception, and Discovery</p>
@@ -780,7 +780,7 @@ const TutorialModal = ({ onClose }) => (
 );
 
 const LogViewer = ({ logs, onClose }) => (
-  <div className="fixed top-16 right-4 w-64 max-h-60 bg-gray-900/95 border border-gray-700 rounded-xl z-[155] overflow-y-auto p-2 shadow-2xl">
+  <div className="fixed top-16 right-4 w-64 max-h-60 bg-gray-900/95 border border-gray-700 rounded-xl z-155 overflow-y-auto p-2 shadow-2xl">
     <div className="bg-slate-900 w-full md:max-w-md h-full md:h-[70vh] rounded-none md:rounded-xl flex flex-col border-none md:border border-slate-700 shadow-2xl">
       <div className="p-4 border-b border-slate-700 flex justify-between items-center bg-slate-800">
         <h3 className="text-white font-bold text-lg flex items-center gap-2">
@@ -828,7 +828,7 @@ const LeaveConfirmModal = ({
   isHost,
   onReturnToLobby,
 }) => (
-  <div className="fixed inset-0 bg-black/90 z-[200] flex items-center justify-center p-4 animate-in fade-in">
+  <div className="fixed inset-0 bg-black/90 z-200 flex items-center justify-center p-4 animate-in fade-in">
     <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 max-w-sm w-full text-center shadow-2xl">
       <h3 className="text-xl font-bold text-white mb-2">Leave Game?</h3>
       <p className="text-slate-400 mb-6 text-sm">
@@ -1513,7 +1513,7 @@ export default function InvestigationGame() {
             size={64}
             className="text-green-500 mx-auto mb-4 animate-bounce drop-shadow-[0_0_15px_rgba(34,197,94,0.5)]"
           />
-          <h1 className="text-3xl sm:text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-b from-green-300 to-green-600 font-serif tracking-widest drop-shadow-md break-words max-w-full">
+          <h1 className="text-3xl sm:text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-linear-to-b from-green-300 to-green-600 font-serif tracking-widest drop-shadow-md wrap-break-word max-w-full">
             INVESTIGATION
           </h1>
           <p className="text-gray-400 tracking-[0.3em] uppercase mt-2">
@@ -1535,7 +1535,7 @@ export default function InvestigationGame() {
           <button
             onClick={createRoom}
             disabled={loading}
-            className="w-full bg-gradient-to-r from-green-700 to-green-600 hover:from-green-600 hover:to-green-500 p-4 rounded font-bold mb-4 flex items-center justify-center gap-2 border border-green-500/30 shadow-[0_0_15px_rgba(34,197,94,0.2)] transition-all"
+            className="w-full bg-linear-to-r from-green-700 to-green-600 hover:from-green-600 hover:to-green-500 p-4 rounded font-bold mb-4 flex items-center justify-center gap-2 border border-green-500/30 shadow-[0_0_15px_rgba(34,197,94,0.2)] transition-all"
           >
             <Badge size={20} /> Create Case File
           </button>
@@ -2478,7 +2478,7 @@ export default function InvestigationGame() {
           <LogViewer logs={gameState.logs} onClose={() => setShowLogs(false)} />
         )}
         {showSolveModal && solveTarget && (
-          <div className="fixed inset-0 top-14 bg-black/90 z-[150] flex items-center justify-center p-4">
+          <div className="fixed inset-0 top-14 bg-black/90 z-150 flex items-center justify-center p-4">
             <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
               <h3 className="text-2xl font-black text-yellow-500 mb-4 flex items-center gap-2">
                 <Badge /> SUBMIT CASE FILE
@@ -2548,7 +2548,7 @@ export default function InvestigationGame() {
           </div>
         )}
         {uiAlert && (
-          <div className="fixed inset-0 top-14 bg-black/90 z-[150] flex items-center justify-center p-4">
+          <div className="fixed inset-0 top-14 bg-black/90 z-150 flex items-center justify-center p-4">
             <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 max-w-sm w-full text-center shadow-2xl">
               <h3 className="text-xl font-bold text-white mb-2">
                 {uiAlert.title}
@@ -2581,7 +2581,7 @@ export default function InvestigationGame() {
           </div>
         )}
         {gameState.activeAccusation && (
-          <div className="fixed inset-0 top-14 bg-black/95 z-[150] flex items-center justify-center p-4">
+          <div className="fixed inset-0 top-14 bg-black/95 z-150 flex items-center justify-center p-4">
             <div
               className={`max-w-lg w-full p-6 rounded-2xl border-4 shadow-2xl text-center ${
                 gameState.activeAccusation.isCorrect
@@ -2663,7 +2663,7 @@ export default function InvestigationGame() {
           </div>
         )}
         {gameState.phase === "WITNESS_HUNT" && witnessHuntModalOpen && (
-          <div className="fixed inset-0 top-14 z-[150] flex flex-col items-center justify-center p-4 bg-black/80">
+          <div className="fixed inset-0 top-14 z-150 flex flex-col items-center justify-center p-4 bg-black/80">
             {isMurderer || isAccomplice ? (
               <div className="bg-red-950 border-2 border-red-500 p-6 rounded-xl shadow-2xl text-center max-w-lg animate-in fade-in zoom-in duration-300">
                 <h2 className="text-2xl md:text-3xl font-black text-red-500 mb-2">
@@ -2727,7 +2727,7 @@ export default function InvestigationGame() {
           </div>
         )}
         {gameState.phase === "GAME_OVER_GOOD" && (
-          <div className="fixed inset-0 top-14 bg-blue-900/95 z-[150] flex flex-col items-center justify-center p-6 text-center overflow-y-auto">
+          <div className="fixed inset-0 top-14 bg-blue-900/95 z-150 flex flex-col items-center justify-center p-6 text-center overflow-y-auto">
             <Badge
               size={96}
               className="text-yellow-400 mb-6 shadow-xl shrink-0"
@@ -2798,7 +2798,7 @@ export default function InvestigationGame() {
           </div>
         )}
         {gameState.phase === "GAME_OVER_BAD" && (
-          <div className="fixed inset-0 top-14 bg-red-950/95 z-[150] flex flex-col items-center justify-center p-6 text-center overflow-y-auto">
+          <div className="fixed inset-0 top-14 bg-red-950/95 z-150 flex flex-col items-center justify-center p-6 text-center overflow-y-auto">
             <Skull size={96} className="text-red-500 mb-6 shadow-xl shrink-0" />
             <h1 className="text-4xl md:text-6xl font-black text-white mb-4">
               MURDERER WINS
@@ -2860,7 +2860,7 @@ export default function InvestigationGame() {
             )}
           </div>
         )}
-        <div className="h-14 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between px-4 z-[160] sticky top-0 backdrop-blur-md shrink-0 shadow-md">
+        <div className="h-14 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between px-4 z-160 sticky top-0 backdrop-blur-md shrink-0 shadow-md">
           <div className="flex items-center gap-2">
             <HeaderIcon size={20} className={headerColor} />
             <span

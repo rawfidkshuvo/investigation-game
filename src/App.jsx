@@ -43,6 +43,7 @@ import {
   Hammer,
   Sparkles,
   HatGlasses,
+  Copy,
 } from "lucide-react";
 
 // --- Firebase Init ---
@@ -52,7 +53,7 @@ const firebaseConfig = {
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -801,8 +802,8 @@ const LogViewer = ({ logs, onClose }) => (
               log.type === "danger"
                 ? "bg-red-900/20 border-red-500 text-red-200"
                 : log.type === "success"
-                ? "bg-green-900/20 border-green-500 text-green-200"
-                : "bg-slate-700/50 border-slate-500 text-slate-300"
+                  ? "bg-green-900/20 border-green-500 text-green-200"
+                  : "bg-slate-700/50 border-slate-500 text-slate-300"
             }`}
           >
             <span className="opacity-50 mr-2 font-mono">
@@ -901,7 +902,7 @@ const RoleCard = ({ role }) => {
 export default function InvestigationGame() {
   const [user, setUser] = useState(null);
   const [view, setView] = useState("menu");
-  
+
   const [roomCodeInput, setRoomCodeInput] = useState("");
   const [roomId, setRoomId] = useState(null);
   const [gameState, setGameState] = useState(null);
@@ -926,7 +927,7 @@ export default function InvestigationGame() {
 
   //read and fill global name
   const [playerName, setPlayerName] = useState(
-    () => localStorage.getItem("gameHub_playerName") || ""
+    () => localStorage.getItem("gameHub_playerName") || "",
   );
   //set global name for all game
   useEffect(() => {
@@ -940,8 +941,6 @@ export default function InvestigationGame() {
       setRoomCodeInput(savedRoomId);
     }
   }, []);
-
-  
 
   useEffect(() => {
     const initAuth = async () => {
@@ -981,7 +980,7 @@ export default function InvestigationGame() {
       "public",
       "data",
       "rooms",
-      roomId
+      roomId,
     );
     const unsubscribe = onSnapshot(roomRef, (docSnap) => {
       if (docSnap.exists()) {
@@ -1008,7 +1007,7 @@ export default function InvestigationGame() {
 
         if (data.status === "playing" && data.phase === "INVESTIGATION") {
           const activeBadges = data.players.filter(
-            (p) => p.role !== "DETECTIVE" && p.badge === true
+            (p) => p.role !== "DETECTIVE" && p.badge === true,
           ).length;
           if (
             activeBadges === 0 &&
@@ -1041,7 +1040,7 @@ export default function InvestigationGame() {
     let logs = [{ text: "All badges used. Murderer Escapes!", type: "danger" }];
     await updateDoc(
       doc(db, "artifacts", appId, "public", "data", "rooms", roomId),
-      { phase: "GAME_OVER_BAD", logs: arrayUnion(...logs) }
+      { phase: "GAME_OVER_BAD", logs: arrayUnion(...logs) },
     );
   };
   const handleAlert = (title, message) => {
@@ -1083,7 +1082,7 @@ export default function InvestigationGame() {
     try {
       await setDoc(
         doc(db, "artifacts", appId, "public", "data", "rooms", newRoomId),
-        roomData
+        roomData,
       );
       setRoomId(newRoomId);
       setRoomCodeInput(newRoomId);
@@ -1105,7 +1104,7 @@ export default function InvestigationGame() {
         "public",
         "data",
         "rooms",
-        roomCodeInput.toUpperCase()
+        roomCodeInput.toUpperCase(),
       );
       const snap = await getDoc(roomRef);
       if (!snap.exists()) throw new Error("Room not found.");
@@ -1139,7 +1138,7 @@ export default function InvestigationGame() {
     const current = gameState.settings?.[setting] || false;
     await updateDoc(
       doc(db, "artifacts", appId, "public", "data", "rooms", roomId),
-      { [`settings.${setting}`]: !current }
+      { [`settings.${setting}`]: !current },
     );
   };
 
@@ -1153,14 +1152,14 @@ export default function InvestigationGame() {
       "public",
       "data",
       "rooms",
-      roomId
+      roomId,
     );
     try {
       if (gameState.hostId === user.uid) {
         await deleteDoc(roomRef);
       } else {
         const updatedPlayers = gameState.players.filter(
-          (p) => p.id !== user.uid
+          (p) => p.id !== user.uid,
         );
         if (updatedPlayers.length === 0) await deleteDoc(roomRef);
         else await updateDoc(roomRef, { players: updatedPlayers });
@@ -1179,7 +1178,7 @@ export default function InvestigationGame() {
     const updatedPlayers = gameState.players.filter((p) => p.id !== playerId);
     await updateDoc(
       doc(db, "artifacts", appId, "public", "data", "rooms", roomId),
-      { players: updatedPlayers }
+      { players: updatedPlayers },
     );
   };
   const signalReplayReady = async () => {
@@ -1187,8 +1186,23 @@ export default function InvestigationGame() {
     if (gameState.replayRequests?.includes(user.uid)) return;
     await updateDoc(
       doc(db, "artifacts", appId, "public", "data", "rooms", roomId),
-      { replayRequests: arrayUnion(user.uid) }
+      { replayRequests: arrayUnion(user.uid) },
     );
+  };
+
+  const copyToClipboard = () => {
+    try {
+      navigator.clipboard.writeText(roomId);
+      triggerFeedback("neutral", "COPIED!", "", CheckCircle);
+    } catch (e) {
+      const el = document.createElement("textarea");
+      el.value = roomId;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand("copy");
+      document.body.removeChild(el);
+      triggerFeedback("neutral", "COPIED!", "", CheckCircle);
+    }
   };
 
   const restartGame = async () => {
@@ -1219,7 +1233,7 @@ export default function InvestigationGame() {
         replayRequests: [],
         readyPlayers: [],
         activeAccusation: null,
-      }
+      },
     );
   };
 
@@ -1274,7 +1288,7 @@ export default function InvestigationGame() {
         readyPlayers: [],
         replayRequests: [],
         activeAccusation: null,
-      }
+      },
     );
   };
 
@@ -1292,7 +1306,7 @@ export default function InvestigationGame() {
     }
     await updateDoc(
       doc(db, "artifacts", appId, "public", "data", "rooms", roomId),
-      updates
+      updates,
     );
   };
 
@@ -1306,7 +1320,7 @@ export default function InvestigationGame() {
           text: "Crime Committed. Detective is analyzing evidence...",
           type: "danger",
         }),
-      }
+      },
     );
   };
   const handleScientistClue = async (tileIndex, optionIndex) => {
@@ -1314,7 +1328,7 @@ export default function InvestigationGame() {
     newTiles[tileIndex].selected = optionIndex;
     await updateDoc(
       doc(db, "artifacts", appId, "public", "data", "rooms", roomId),
-      { activeTiles: newTiles }
+      { activeTiles: newTiles },
     );
   };
   const finishScientistPhase = async () => {
@@ -1330,26 +1344,26 @@ export default function InvestigationGame() {
           type: "info",
         }),
         nextRoundRequests: [],
-      }
+      },
     );
   };
   const requestNextRound = async () => {
     if (gameState.nextRoundRequests?.includes(user.uid)) return;
     await updateDoc(
       doc(db, "artifacts", appId, "public", "data", "rooms", roomId),
-      { nextRoundRequests: arrayUnion(user.uid) }
+      { nextRoundRequests: arrayUnion(user.uid) },
     );
   };
   const nextRound = async (tileToReplaceIndex) => {
     if (tileToReplaceIndex < 2)
       return handleAlert(
         "Invalid Action",
-        "You cannot replace the Cause of Death or Main Location tile."
+        "You cannot replace the Cause of Death or Main Location tile.",
       );
     if (gameState.round >= 3) return;
     const currentSceneTitles = gameState.activeTiles.map((t) => t.title);
     const available = TILES_DATA.SUBORDINATE.filter(
-      (t) => !currentSceneTitles.includes(t.title)
+      (t) => !currentSceneTitles.includes(t.title),
     );
     const newTile = shuffle(available)[0];
     const newActiveTiles = [...gameState.activeTiles];
@@ -1370,7 +1384,7 @@ export default function InvestigationGame() {
           } Begins. Detective is updating a clue...`,
           type: "neutral",
         }),
-      }
+      },
     );
     setReplacementMode(false);
   };
@@ -1407,7 +1421,7 @@ export default function InvestigationGame() {
           text: `${updatedPlayers[meIndex].name} submitted a case file.`,
           type: "neutral",
         }),
-      }
+      },
     );
     setShowSolveModal(false);
     setSolveTarget(null);
@@ -1446,13 +1460,13 @@ export default function InvestigationGame() {
     }
     await updateDoc(
       doc(db, "artifacts", appId, "public", "data", "rooms", roomId),
-      updates
+      updates,
     );
   };
   const handleAccompliceSuggest = async (playerId) => {
     await updateDoc(
       doc(db, "artifacts", appId, "public", "data", "rooms", roomId),
-      { accompliceSuggestion: playerId }
+      { accompliceSuggestion: playerId },
     );
   };
   const attemptFindWitness = async (targetId) => {
@@ -1474,7 +1488,7 @@ export default function InvestigationGame() {
     }
     await updateDoc(
       doc(db, "artifacts", appId, "public", "data", "rooms", roomId),
-      { phase: nextPhase, logs: arrayUnion(...logs) }
+      { phase: nextPhase, logs: arrayUnion(...logs) },
     );
   };
 
@@ -1599,9 +1613,20 @@ export default function InvestigationGame() {
         )}
         <div className="z-10 w-full max-w-lg bg-gray-800/90 p-8 rounded-2xl border border-gray-700 shadow-2xl mb-4">
           <div className="flex justify-between items-center mb-8 border-b border-gray-700 pb-4">
-            <h2 className="text-2xl font-serif text-green-500">
-              Case File: {gameState.roomId}
-            </h2>
+            {/* Grouping Title and Copy Button together on the left */}
+            <div className="flex items-center gap-2">
+              <h2 className="text-2xl font-serif text-green-500">
+                Case File:{" "}
+                <span className="text-white font-mono">{gameState.roomId}</span>
+              </h2>
+              <button
+                onClick={copyToClipboard}
+                className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-400 hover:text-white"
+                title="Copy Room ID"
+              >
+                <Copy size={16} />
+              </button>
+            </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 text-sm text-gray-400">
                 <User size={16} /> {playerCount}/10
@@ -1754,7 +1779,7 @@ export default function InvestigationGame() {
     const isAccomplice = me.role === "ACCOMPLICE";
 
     const myAccusation = gameState.accusations?.find(
-      (acc) => acc.solverId === user.uid
+      (acc) => acc.solverId === user.uid,
     );
 
     // --- TOGGLE SELECTION HELPER ---
@@ -2006,7 +2031,7 @@ export default function InvestigationGame() {
         .every((p) => {
           const hasRequested = gameState.nextRoundRequests?.includes(p.id);
           const hasSubmitted = gameState.accusations?.some(
-            (acc) => acc.solverId === p.id
+            (acc) => acc.solverId === p.id,
           );
           return hasRequested || hasSubmitted;
         });
@@ -2056,8 +2081,8 @@ export default function InvestigationGame() {
                         tile.type === "purple"
                           ? "bg-purple-900"
                           : tile.type === "green"
-                          ? "bg-emerald-900"
-                          : "bg-slate-700"
+                            ? "bg-emerald-900"
+                            : "bg-slate-700"
                       }`}
                     >
                       {tile.title}
@@ -2077,8 +2102,8 @@ export default function InvestigationGame() {
                               isSelected
                                 ? "bg-red-600 text-white font-bold shadow-md ring-1 ring-red-400"
                                 : isScientist && isActive
-                                ? "hover:bg-slate-700 text-slate-300"
-                                : "text-slate-500 opacity-50"
+                                  ? "hover:bg-slate-700 text-slate-300"
+                                  : "text-slate-500 opacity-50"
                             }`}
                           >
                             <span className="truncate">{opt}</span>
@@ -2122,8 +2147,8 @@ export default function InvestigationGame() {
                       replacementMode
                         ? "bg-red-500 animate-pulse"
                         : everyoneRequested
-                        ? "bg-blue-600"
-                        : "bg-slate-700 opacity-50 cursor-not-allowed"
+                          ? "bg-blue-600"
+                          : "bg-slate-700 opacity-50 cursor-not-allowed"
                     } hover:brightness-110 text-white px-3 py-1.5 rounded text-xs font-bold shadow-lg transition-colors flex items-center gap-1`}
                   >
                     {replacementMode ? "Select Tile" : "Next Rnd"}
@@ -2168,7 +2193,7 @@ export default function InvestigationGame() {
                 const isSuggested = gameState.accompliceSuggestion === p.id;
                 const isAccusedByMe = myAccusation?.targetId === p.id;
                 const pAccusation = gameState.accusations?.find(
-                  (acc) => acc.solverId === p.id
+                  (acc) => acc.solverId === p.id,
                 );
                 const showWitnessButtons =
                   gameState.phase === "WITNESS_HUNT" &&
@@ -2260,10 +2285,10 @@ export default function InvestigationGame() {
                                 isSelected
                                   ? "bg-red-600 text-white font-bold shadow-md scale-105 border border-white"
                                   : isSubmitted
-                                  ? "bg-red-900/40 text-red-200 border border-yellow-500/50 shadow-inner"
-                                  : isSolution
-                                  ? "bg-purple-900/80 text-white border-2 border-purple-400 animate-pulse"
-                                  : "bg-slate-800 text-red-200 border border-red-900/30 hover:bg-red-900/20 hover:border-red-500"
+                                    ? "bg-red-900/40 text-red-200 border border-yellow-500/50 shadow-inner"
+                                    : isSolution
+                                      ? "bg-purple-900/80 text-white border-2 border-purple-400 animate-pulse"
+                                      : "bg-slate-800 text-red-200 border border-red-900/30 hover:bg-red-900/20 hover:border-red-500"
                               } ${
                                 p.id === user.uid &&
                                 "opacity-50 cursor-not-allowed"
@@ -2301,10 +2326,10 @@ export default function InvestigationGame() {
                                 isSelected
                                   ? "bg-blue-600 text-white font-bold shadow-md scale-105 border border-white"
                                   : isSubmitted
-                                  ? "bg-blue-900/40 text-blue-200 border border-yellow-500/50 shadow-inner"
-                                  : isSolution
-                                  ? "bg-purple-900/80 text-white border-2 border-purple-400 animate-pulse"
-                                  : "bg-slate-800 text-blue-200 border border-blue-900/30 hover:bg-blue-900/20 hover:border-blue-500"
+                                    ? "bg-blue-900/40 text-blue-200 border border-yellow-500/50 shadow-inner"
+                                    : isSolution
+                                      ? "bg-purple-900/80 text-white border-2 border-purple-400 animate-pulse"
+                                      : "bg-slate-800 text-blue-200 border border-blue-900/30 hover:bg-blue-900/20 hover:border-blue-500"
                               } ${
                                 p.id === user.uid &&
                                 "opacity-50 cursor-not-allowed"
@@ -2377,7 +2402,7 @@ export default function InvestigationGame() {
                           <span className="font-bold text-white text-sm">
                             {
                               gameState.players.find(
-                                (t) => t.id === pAccusation.targetId
+                                (t) => t.id === pAccusation.targetId,
                               )?.name
                             }
                           </span>
@@ -2422,7 +2447,7 @@ export default function InvestigationGame() {
                               handleConfirm(
                                 "Eliminate Witness?",
                                 `End game by guessing ${p.name}?`,
-                                () => attemptFindWitness(p.id)
+                                () => attemptFindWitness(p.id),
                               );
                             }}
                             className="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded-lg text-xs flex items-center justify-center gap-2 shadow-lg animate-pulse"
@@ -2491,7 +2516,7 @@ export default function InvestigationGame() {
                   <div className="text-xl font-bold text-white">
                     {
                       gameState.players.find(
-                        (p) => p.id === solveTarget.targetId
+                        (p) => p.id === solveTarget.targetId,
                       )?.name
                     }
                   </div>
@@ -2610,7 +2635,7 @@ export default function InvestigationGame() {
                   <span className="text-xl text-white font-black">
                     {
                       gameState.players.find(
-                        (p) => p.id === gameState.activeAccusation.targetId
+                        (p) => p.id === gameState.activeAccusation.targetId,
                       )?.name
                     }
                   </span>
@@ -2645,7 +2670,7 @@ export default function InvestigationGame() {
                 <button
                   onClick={handleContinueAccusation}
                   disabled={gameState.activeAccusation.continueVotes?.includes(
-                    user.uid
+                    user.uid,
                   )}
                   className={`px-8 py-3 rounded-full font-bold text-lg transition-all flex items-center gap-2 ${
                     gameState.activeAccusation.continueVotes?.includes(user.uid)
@@ -2694,7 +2719,7 @@ export default function InvestigationGame() {
                       <span className="text-white font-black text-lg block mt-1">
                         {
                           gameState.players.find(
-                            (p) => p.id === gameState.accompliceSuggestion
+                            (p) => p.id === gameState.accompliceSuggestion,
                           )?.name
                         }
                       </span>
@@ -2773,7 +2798,7 @@ export default function InvestigationGame() {
                 <span className="text-white font-black">
                   {
                     gameState.players.find(
-                      (p) => p.id === gameState.solution.murdererId
+                      (p) => p.id === gameState.solution.murdererId,
                     )?.name
                   }
                 </span>
@@ -2836,7 +2861,7 @@ export default function InvestigationGame() {
                 <span className="text-white font-black">
                   {
                     gameState.players.find(
-                      (p) => p.id === gameState.solution.murdererId
+                      (p) => p.id === gameState.solution.murdererId,
                     )?.name
                   }
                 </span>

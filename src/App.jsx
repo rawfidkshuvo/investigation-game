@@ -1055,7 +1055,11 @@ export default function InvestigationGame() {
   const createRoom = async () => {
     if (!user || !playerName.trim()) return setError("Enter nickname.");
     setLoading(true);
-    const newRoomId = Math.random().toString(36).substring(2, 7).toUpperCase();
+    const chars = "123456789ABCDEFGHIJKLMNPQRSTUVWXYZ";
+    let newRoomId = "";
+    for (let i = 0; i < 6; i++) {
+      newRoomId += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
     localStorage.setItem("investigation_roomId", newRoomId);
     const roomData = {
       roomId: newRoomId,

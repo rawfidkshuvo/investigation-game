@@ -1514,7 +1514,7 @@ export default function InvestigationGame() {
   if (isMaintenance) {
     return (
       <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center text-white p-4 text-center">
-        <NeonLogoBig />
+        <InvestigationLogoBig />
         <div className="bg-orange-500/10 p-8 rounded-2xl border border-orange-500/30">
           <Hammer
             size={64}
@@ -1536,7 +1536,7 @@ export default function InvestigationGame() {
             </div>
           </div>
         </a>
-        <NeonLogo />
+        <InvestigationLogo />
       </div>
     );
   }
